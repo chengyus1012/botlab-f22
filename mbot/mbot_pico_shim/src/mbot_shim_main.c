@@ -19,6 +19,7 @@
 #include <mbot_lcm_msgs_timestamp_t.h>
 #include <mbot_lcm_msgs_omni_encoder_t.h>
 #include <mbot_lcm_msgs_reset_odometry_t.h>
+#include <mbot_lcm_msgs_mbot_wheel_ctrl_t.h>
 
 #include <mbot_pico_shim/protocol.h>
 #include <mbot_pico_shim/topic_data.h>
@@ -167,6 +168,18 @@ void serial_odometry_cb(serial_odometry_t* data)
     to_send.y = data->y;
     mbot_lcm_msgs_odometry_t_publish(lcmInstance, "ODOMETRY", &to_send);
 }
+void serial_mbot_wheel_ctrl_cb(serial_mbot_wheel_ctrl_t* data)
+{
+    mbot_lcm_msgs_mbot_wheel_ctrl_t to_send = {0};
+    to_send.utime = data->utime;
+    to_send.left_motor_pwm = data->left_motor_pwm;
+    to_send.right_motor_pwm = data->right_motor_pwm;
+    to_send.left_motor_vel = data->left_motor_vel;
+    to_send.right_motor_vel = data->right_motor_vel;
+    to_send.left_motor_vel_cmd = data->left_motor_vel_cmd;
+    to_send.right_motor_vel_cmd = data->right_motor_vel_cmd;
+    mbot_lcm_msgs_mbot_wheel_ctrl_t_publish(lcmInstance, "MBOT_WHEEL_CTRL", &to_send);
+}
 
 void serial_imu_cb(serial_mbot_imu_t* data)
 {
@@ -204,6 +217,7 @@ void register_topics()
     comms_register_topic(RST_ENC_SER_CHANNEL, sizeof(ENCODER_SER_TYPE), (Deserialize)&ENCODER_DSR_FN, (Serialize)&ENCODER_SER_FN, NULL);
     // motor commands topic (note the #define's to switch between omni and diff drive)
     comms_register_topic(MTR_CMD_CHANNEL, sizeof(MTR_CMD_TYPE_SER), (Deserialize)&MTR_CMD_DSR_FN, (Serialize)&MTR_CMD_SER_FN, NULL);
+    comms_register_topic(MBOT_WHEEL_CTRL, sizeof(serial_mbot_wheel_ctrl_t), (Deserialize)&mbot_wheel_ctrl_t_deserialize, (Serialize)&mbot_wheel_ctrl_t_serialize, (MsgCb)serial_mbot_wheel_ctrl_cb);
 }
 
 void* handle_lcm(void* data)

@@ -97,3 +97,25 @@ int mbot_omni_motor_command_t_serialize(serial_mbot_omni_motor_command_t* src, u
     memcpy(dest, src, sizeof(serial_mbot_omni_motor_command_t));
     return 1;
 }
+
+int mbot_reset_odometry_t_deserialize(uint8_t* src, serial_reset_odometry_t* dest)
+{
+    memcpy(dest, src, sizeof(serial_reset_odometry_t));
+    return 1;
+}
+int mbot_reset_odometry_t_serialize(serial_reset_odometry_t* src, uint8_t* dest)
+{
+    memcpy(dest, src, sizeof(serial_reset_odometry_t));
+    return 1;
+}
+
+int mbot_wheel_ctrl_t_deserialize(uint8_t* src, serial_mbot_wheel_ctrl_t* dest)
+{
+    memcpy(dest, src, sizeof(serial_mbot_wheel_ctrl_t));
+    return 1;
+}
+int mbot_wheel_ctrl_t_serialize(serial_mbot_wheel_ctrl_t* src, uint8_t* dest)
+{
+    memcpy(dest, src, sizeof(serial_mbot_wheel_ctrl_t));
+    return 1;
+}

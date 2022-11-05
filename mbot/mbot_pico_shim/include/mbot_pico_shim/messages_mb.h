@@ -14,7 +14,8 @@ enum message_topics{
     OMNI_MOTOR_COMMAND = 230, 
     MBOT_ENCODERS = 240, 
     OMNI_ENCODERS = 241, 
-    RESET_ENCODERS = 242
+    RESET_ENCODERS = 242,
+    MBOT_WHEEL_CTRL = 243
 };
 
 typedef struct serial_timestamp{
@@ -28,6 +29,13 @@ typedef struct __attribute__((__packed__ )) serial_odometry{
     float y;
     float theta;
 } serial_odometry_t;
+
+typedef struct __attribute__((__packed__ )) serial_reset_odometry{
+    // uint64_t utime; // timestamp
+    float x;
+    float y;
+    float theta;
+} serial_reset_odometry_t;
 
 // need to be packed in order to make the byte copy from numpy and C to play nicely
 typedef struct __attribute__((__packed__ )) serial_mbot_imu{
@@ -74,6 +82,16 @@ typedef struct __attribute__((__packed__ )) serial_mbot_omni_motor_command{
     float wz;
 } serial_mbot_omni_motor_command_t;
 
+typedef struct __attribute__((__packed__ )) serial_mbot_wheel_ctrl{
+    uint64_t utime; // timestamp
+    float left_motor_pwm;
+    float right_motor_pwm;
+    float left_motor_vel_cmd;
+    float right_motor_vel_cmd;
+    float left_motor_vel;
+    float right_motor_vel;
+} serial_mbot_wheel_ctrl_t;
+
 int timestamp_t_deserialize(uint8_t* src, serial_timestamp_t* dest);
 int timestamp_t_serialize(serial_timestamp_t* src, uint8_t* dest);
 
@@ -94,5 +112,11 @@ int mbot_motor_command_t_serialize(serial_mbot_motor_command_t* src, uint8_t* de
 
 int mbot_omni_motor_command_t_deserialize(uint8_t* src, serial_mbot_omni_motor_command_t* dest);
 int mbot_omni_motor_command_t_serialize(serial_mbot_omni_motor_command_t* src, uint8_t* dest);
+
+int mbot_reset_odometry_t_deserialize(uint8_t* src, serial_reset_odometry_t* dest);
+int mbot_reset_odometry_t_serialize(serial_reset_odometry_t* src, uint8_t* dest);
+
+int mbot_wheel_ctrl_t_deserialize(uint8_t* src, serial_mbot_wheel_ctrl_t* dest);
+int mbot_wheel_ctrl_t_serialize(serial_mbot_wheel_ctrl_t* src, uint8_t* dest);
 
 #endif
