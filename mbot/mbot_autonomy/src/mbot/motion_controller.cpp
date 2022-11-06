@@ -420,7 +420,7 @@ int main(int argc, char** argv)
             else if (cmd.trans_v < -0.3) cmd.trans_v = -0.3;
 
             // Angular vel
-            float max_ang_vel = M_PI * 2.0 / 3.0;
+            float max_ang_vel = M_PI / 4.0;
             if (cmd.angular_v > max_ang_vel) cmd.angular_v = max_ang_vel;
             else if (cmd.angular_v < -max_ang_vel) cmd.angular_v = -max_ang_vel;
 
