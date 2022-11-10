@@ -4,6 +4,7 @@
 #include <mbot_lcm_msgs/pose_xyt_t.hpp>
 #include <mbot_lcm_msgs/particle_t.hpp>
 #include <random>
+#include <ctime>
 
 /**
 * ActionModel implements the sampling-based odometry action model for estimating the motion of the robot between
@@ -70,7 +71,7 @@ private:
 
     bool initialized_;
 
-    std::mt19937 numberGenerator_;
+    std::mt19937 numberGenerator_(time(nullptr));
 
     float xStd_;
     float yStd_;
