@@ -39,9 +39,9 @@ bool ActionModel::updateAction(const mbot_lcm_msgs::pose_xyt_t& odometry)
 
     bool moved = (dx_!=0 || dy_!=0 || dtheta_!=0);
 
-    xStd_ = sqrt(k1_ * fabs(max(dx_, min_dist_)));
-    yStd_ = sqrt(k1 * fabs(max(dy_, min_dist_)));
-    thetaStd_ = sqrt(k2 * fabs(max(dtheta_, min_theta_)));
+    xStd_ = sqrt(k1_ * fabs(std::max(dx_, min_dist_)));
+    yStd_ = sqrt(k1_ * fabs(std::max(dy_, min_dist_)));
+    thetaStd_ = sqrt(k2_ * fabs(std::max(dtheta_, min_theta_)));
 
     utime_ = odometry.utime;
     previousPose_ = odometry;
