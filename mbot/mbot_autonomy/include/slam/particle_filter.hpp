@@ -1,6 +1,7 @@
 #ifndef SLAM_PARTICLE_FILTER_HPP
 #define SLAM_PARTICLE_FILTER_HPP
 
+#include <bits/stdc++.h>
 #include <vector>
 #include <algorithm>
 
@@ -95,6 +96,9 @@ private:
     float quality_reinvigoration_percentage;
 
     int kNumParticles_;         // Number of particles to use for estimating the pose
+    double cur_avg_weight;
+    double prev_avg_weight;
+    bool avg_w_initialized = false;
 
     ParticleList resamplePosteriorDistribution(const OccupancyGrid* map = nullptr);
     ParticleList computeProposalDistribution(const ParticleList& prior);
