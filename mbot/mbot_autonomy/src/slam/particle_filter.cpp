@@ -189,14 +189,14 @@ ParticleList ParticleFilter::computeNormalizedPosterior(const ParticleList& prop
     double sumWeights = 0.0;
     prev_avg_weight = cur_avg_weight;
     cur_avg_weight = 0.0;
-    for(auto &&p : proposal){
+    for(auto &p : proposal){
         mbot_lcm_msgs::particle_t weighted = p;
         weighted.weight = sensorModel_.likelihood(weighted, laser, map);
         sumWeights += weighted.weight;
         posterior.push_back(weighted);
     }
 
-    for(auto &&p : posterior){
+    for(auto &p : posterior){
         p.weight /= sumWeights;
         cur_avg_weight += p.weight/kNumParticles_;
         if(!avg_w_initialized)
@@ -207,25 +207,40 @@ ParticleList ParticleFilter::computeNormalizedPosterior(const ParticleList& prop
     return posterior;
 }
 
+struct particle_t_comparator {
+  bool operator() (mbot_lcm_msgs::particle_t i,mbot_lcm_msgs::particle_t j) { return (i.weight > j.weight);}
+};
 
 mbot_lcm_msgs::pose_xyt_t ParticleFilter::estimatePosteriorPose(const ParticleList& posterior)
 {
     //////// TODO: Implement your method for computing the final pose estimate based on the posterior distribution
     mbot_lcm_msgs::pose_xyt_t pose;
+
+    double percentage = 0.25;
+    particle_t_comparator comparator;
+    ParticleList posterior_sorted = posterior;
+    std::sort(posterior_sorted.begin(), posterior_sorted.end(), comparator);
+
     double xMean = 0.0;
     double yMean = 0.0;
     double cosThetaMean = 0.0;
     double sinThetaMean = 0.0;
-
-    for(auto& p : posterior){
+    double totalWeight = 0.0;
+    int idx = 0;
+    // using best percentage particles
+    for(auto& p : posterior_sorted){
+        if (idx > static_cast<int>(posterior_sorted.size() * percentage))
+            break;
         xMean +=p.weight * p.pose.x;
         yMean +=p.weight * p.pose.y;
         cosThetaMean += p.weight*std::cos(p.pose.theta);
         sinThetaMean += p.weight*std::sin(p.pose.theta);
+        totalWeight += p.weight;
+        idx++;
     }
 
-    pose.x = xMean;
-    pose.y = yMean;
+    pose.x = xMean / totalWeight;
+    pose.y = yMean / totalWeight;
     pose.theta = std::atan2(sinThetaMean, cosThetaMean);
 
     return pose;
