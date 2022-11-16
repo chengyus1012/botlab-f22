@@ -7,7 +7,7 @@ import numpy
 import threading
 from copy import copy, deepcopy
 
-sys.path.append('../lcmtypes')
+sys.path.append('/home/pi/botlab-f22/system_compilation/python/mbot_lcm_msgs')
 from mbot_motor_command_t import mbot_motor_command_t
 
 

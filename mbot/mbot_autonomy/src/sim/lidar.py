@@ -8,7 +8,7 @@ import numpy
 from copy import deepcopy
 # Lcm
 import lcm
-sys.path.append('../lcmtypes')
+sys.path.append('/home/pi/botlab-f22/system_compilation/python/mbot_lcm_msgs')
 from lidar_t import lidar_t
 
 

@@ -23,7 +23,7 @@ void ParticleFilter::initializeFilterAtPose(const mbot_lcm_msgs::pose_xyt_t& pos
     double sampleWeight = 1.0/kNumParticles_;
 
     posteriorPose_ = pose;
-
+    std::cout<<" initial pose.\n"<<" "<<pose.x << pose.y << pose.theta << std::endl;
     for(auto &&p : posterior_){
         p.pose.x = pose.x;
         p.pose.y = pose.y;
@@ -60,7 +60,7 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::updateFilter(const mbot_lcm_msgs::pose
                                                         const OccupancyGrid& map)
 {
     bool hasRobotMoved = actionModel_.updateAction(odometry);
-
+    std::cout<<"has moved: "<<hasRobotMoved << std::endl;
     auto prior = resamplePosteriorDistribution(&map);
     auto proposal = computeProposalDistribution(prior);
     posterior_ = computeNormalizedPosterior(proposal, laser, map);
@@ -121,7 +121,7 @@ ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* 
     }
     Neff = 1.0/temp;
     if(Neff > kNumParticles_/2)
-        ;
+        std::cout << "Enough effective particles.\n";
     else{
         
         double r = (double) rand()/RAND_MAX/kNumParticles_;
@@ -148,6 +148,7 @@ ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* 
             // p.pose.utime = posteriorPose_.utime;
             // p.parent_pose = posteriorPose_;
         }
+        std::cout << "Low variance resampling.\n";
     }
     
     if(avg_w_initialized){
@@ -158,9 +159,10 @@ ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* 
                 prior[i] = randomPoseGen.get_particle();
                 prior[i].weight = sampleWeight;
             }
+            std::cout << "reinvigorate.\n";
         }
     }
-        
+    std::cout << "Particles resampled\n";    
 
 
     return prior;
@@ -175,6 +177,7 @@ ParticleList ParticleFilter::computeProposalDistribution(const ParticleList& pri
     for(auto& p : prior){
         proposal.push_back(actionModel_.applyAction(p));
     }
+    std::cout << "Apply action.\n";
     return proposal;
 }
 
@@ -192,6 +195,7 @@ ParticleList ParticleFilter::computeNormalizedPosterior(const ParticleList& prop
     for(auto &p : proposal){
         mbot_lcm_msgs::particle_t weighted = p;
         weighted.weight = sensorModel_.likelihood(weighted, laser, map);
+        // std::cout<<"weight: "<<weighted.weight << std::endl;
         sumWeights += weighted.weight;
         posterior.push_back(weighted);
     }
@@ -204,6 +208,7 @@ ParticleList ParticleFilter::computeNormalizedPosterior(const ParticleList& prop
         else
             cur_avg_weight = 0.1*prev_avg_weight + 0.9*cur_avg_weight;
     }
+    std::cout << "Posterior normalized.\n";
     return posterior;
 }
 
@@ -242,7 +247,8 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::estimatePosteriorPose(const ParticleLi
     pose.x = xMean / totalWeight;
     pose.y = yMean / totalWeight;
     pose.theta = std::atan2(sinThetaMean, cosThetaMean);
-
+    
+    std::cout << "Mean pose calculated.\n"<<" "<<pose.x << pose.y << pose.theta << std::endl;
     return pose;
 }
 

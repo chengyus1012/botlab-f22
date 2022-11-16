@@ -82,9 +82,9 @@ mbot_lcm_msgs::particle_t ActionModel::applyAction(const mbot_lcm_msgs::particle
     // float sampleY = y(numberGenerator_);
     // float sampleTheta = theta(numberGenerator_);
 
-    float sampleRot1 = std::normal_distribution<float>(rot1_, rot1Std_)(numberGenerator_);
-    float sampleRot2 = std::normal_distribution<float>(rot2_, rot2Std_)(numberGenerator_);
-    float sampleTrans = std::normal_distribution<float>(trans_, tranStd_)(numberGenerator_);
+    float sampleRot1 = std::normal_distribution<>(rot1_, rot1Std_)(numberGenerator_);
+    float sampleRot2 = std::normal_distribution<>(rot2_, rot2Std_)(numberGenerator_);
+    float sampleTrans = std::normal_distribution<>(trans_, tranStd_)(numberGenerator_);
 
 
     newSample.pose.x += sampleTrans * std::cos(sample.pose.theta + sampleRot1);
@@ -92,6 +92,7 @@ mbot_lcm_msgs::particle_t ActionModel::applyAction(const mbot_lcm_msgs::particle
     newSample.pose.theta = wrap_to_pi(sample.pose.theta + sampleRot1 + sampleRot2);
     newSample.pose.utime = utime_;
     newSample.parent_pose = sample.pose;
+    // std::cout<<"newSample pose"<<" "<<newSample.pose.x<<" " << newSample.pose.y<<" " << newSample.pose.theta << std::endl;
 
     return newSample;
 }

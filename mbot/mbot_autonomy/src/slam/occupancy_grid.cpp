@@ -136,6 +136,7 @@ bool OccupancyGrid::saveToFile(const std::string& filename) const
 bool OccupancyGrid::loadFromFile(const std::string& filename)
 {
     std::ifstream in(filename);
+    std::cout << "loading map from: "<< filename << '\n';
     if(!in.is_open())
     {
         std::cerr << "ERROR: OccupancyGrid::loadFromFile: Failed to load from " << filename << '\n';

@@ -229,6 +229,7 @@ bool OccupancyGridSLAM::isReadyToUpdate(void)
 void OccupancyGridSLAM::runSLAMIteration(void)
 {
     copyDataForSLAMUpdate();
+    std::cout << "Data copy finished.\n";
     initializePosesIfNeeded();
 
     // Sanity check the laser data to see if rplidar_driver has lost sync
@@ -287,10 +288,14 @@ void OccupancyGridSLAM::initializePosesIfNeeded(void)
         currentPose_.utime  = currentScan_.times.back();
         haveInitializedPoses_ = true;
 
-        if (randomInitialPos_)
+        if (randomInitialPos_){
             filter_.initializeFilterRandomly(map_);
-        else
+            std::cout << "Initialized randomly.\n";}
+        else{
             filter_.initializeFilterAtPose(previousPose_);
+            std::cout << "Initialized at pose.\n";
+        }
+            
     }
 
     assert(haveInitializedPoses_);

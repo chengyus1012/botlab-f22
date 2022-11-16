@@ -11,7 +11,7 @@ import sys
 import numpy
 import argparse
 import lcm
-sys.path.append('../lcmtypes')
+sys.path.append('/home/pi/botlab-f22/system_compilation/python/mbot_lcm_msgs')
 from odometry_t import odometry_t
 from mbot_motor_command_t import mbot_motor_command_t
 
