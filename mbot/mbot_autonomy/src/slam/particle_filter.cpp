@@ -123,8 +123,11 @@ ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* 
         temp += posterior_[i].weight * posterior_[i].weight;
     }
     Neff = 1.0/temp;
-    if(Neff > kNumParticles_)
+    if(Neff > (int)kNumParticles_*0.67){
+        std::cout << Neff;
+        std::cout << (int)kNumParticles_*0.67;
         std::cout << "Enough effective particles.\n";
+    }
     else{
         std::cout << "Low variance resampling.\n";
         // double r = (double) rand()/RAND_MAX/kNumParticles_;
