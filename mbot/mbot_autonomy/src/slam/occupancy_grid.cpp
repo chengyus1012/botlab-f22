@@ -148,6 +148,14 @@ bool OccupancyGrid::loadFromFile(const std::string& filename)
     
     // Read header
     in >> globalOrigin_.x >> globalOrigin_.y >> width_ >> height_ >> metersPerCell_;
+    cellsPerMeter_ = 1.0f / metersPerCell_;
+    
+    std::cout << "current map info"<< '\n';
+    std::cout << "width: "<< width_ <<'\n';
+    std::cout << "height: "<< height_ <<'\n';
+    std::cout << "meterspercell: "<< metersPerCell_ <<'\n';
+    std::cout << "global origin: "<< globalOrigin_.x <<" "<< globalOrigin_.y <<'\n';
+    
     
     // Check sanity of values
     assert(width_ > 0);

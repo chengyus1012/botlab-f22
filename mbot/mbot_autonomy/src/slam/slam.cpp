@@ -29,7 +29,7 @@ OccupancyGridSLAM::OccupancyGridSLAM(int numParticles,
 , numIgnoredScans_(0)
 , iters_(0)
 , filter_(numParticles)
-, map_(20.0f, 20.0f, 0.025f) // create a 20m x 20m grid with 0.025m cells
+, map_(10.0f, 10.0f, 0.05f) // create a 20m x 20m grid with 0.025m cells
 , mapper_(5.0f, hitOddsIncrease, missOddsDecrease)
 , lcm_(lcmComm)
 , mapUpdateCount_(0)
@@ -229,7 +229,7 @@ bool OccupancyGridSLAM::isReadyToUpdate(void)
 void OccupancyGridSLAM::runSLAMIteration(void)
 {
     copyDataForSLAMUpdate();
-    std::cout << "Data copy finished.\n";
+    // std::cout << "Data copy finished.\n";
     initializePosesIfNeeded();
 
     // Sanity check the laser data to see if rplidar_driver has lost sync

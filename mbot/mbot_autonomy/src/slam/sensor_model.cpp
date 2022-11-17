@@ -22,10 +22,15 @@ double SensorModel::likelihood(const mbot_lcm_msgs::particle_t& sample,
     for(auto &ray : movingScan){
         Point<double> endpoint(ray.origin.x + ray.range * std::cos(ray.theta), ray.origin.y + ray.range * std::sin(ray.theta));
 
-        auto rayEnd = global_position_to_grid_cell(endpoint, map);
-        auto rayCost_m = map.logOdds(rayEnd.x, rayEnd.y);
-        auto rayCost_b = map.logOdds(rayEnd.x-1, rayEnd.y-1);
-        auto rayCost_f = map.logOdds(rayEnd.x+1, rayEnd.y+1);
+        Point<int> rayEnd = global_position_to_grid_cell(endpoint, map);
+        Point<int> rayStart = global_position_to_grid_cell(ray.origin, map);
+
+        int sx = (rayStart.x < rayEnd.x) ? 1 : -1;
+        int sy = (rayStart.y < rayEnd.y) ? 1 : -1;
+
+        CellOdds rayCost_m = map.logOdds(rayEnd.x, rayEnd.y);
+        CellOdds rayCost_b = map.logOdds(rayEnd.x-sx, rayEnd.y-sy);
+        CellOdds rayCost_f = map.logOdds(rayEnd.x+sx, rayEnd.y+sy);
 
 
         if(rayCost_m>0){

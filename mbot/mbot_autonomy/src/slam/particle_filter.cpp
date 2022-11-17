@@ -23,7 +23,7 @@ void ParticleFilter::initializeFilterAtPose(const mbot_lcm_msgs::pose_xyt_t& pos
     double sampleWeight = 1.0/kNumParticles_;
 
     posteriorPose_ = pose;
-    std::cout<<" initial pose.\n"<<" "<<pose.x << pose.y << pose.theta << std::endl;
+    std::cout<<" initial pose.\n"<<" "<<pose.x << " "<< pose.y << " "<< pose.theta << std::endl;
     for(auto &&p : posterior_){
         p.pose.x = pose.x;
         p.pose.y = pose.y;
@@ -123,26 +123,24 @@ ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* 
         temp += posterior_[i].weight * posterior_[i].weight;
     }
     Neff = 1.0/temp;
-    if(Neff > kNumParticles_/2)
+    if(Neff > kNumParticles_)
         std::cout << "Enough effective particles.\n";
     else{
-        
-        double r = (double) rand()/RAND_MAX/kNumParticles_;
-        int count = 0;
+        std::cout << "Low variance resampling.\n";
+        // double r = (double) rand()/RAND_MAX/kNumParticles_;
         std::random_device rd;
         std::mt19937 generator(rd());
-        std::normal_distribution<> dist(0.0, 0.04);
+        std::uniform_real_distribution<double> dist(0.0, 1.0 / kNumParticles_);
+        double r = dist(generator);
+        int count = 0;
         std::vector<double> cumWeight;
-        cumWeight[0] = prior[0].weight;
+        double c = posterior_[0].weight;
         
-        for(int i=1; i<kNumParticles_; i++){
-            cumWeight[i] = cumWeight[i-1] + prior[i].weight;
-        }
         // do low variance resample
         for(int i=0; i<kNumParticles_;i++){
             double u = r + i/kNumParticles_;
-            while (u>cumWeight[count])
-                count++;
+            while (u>c)
+                c += posterior_[++count].weight;
             prior[i] = posterior_[count];
             prior[i].weight = sampleWeight;
             // p.pose.x = posteriorPose_.x + dist(generator);
@@ -151,7 +149,7 @@ ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* 
             // p.pose.utime = posteriorPose_.utime;
             // p.parent_pose = posteriorPose_;
         }
-        std::cout << "Low variance resampling.\n";
+        
     }
     
     if(avg_w_initialized){
