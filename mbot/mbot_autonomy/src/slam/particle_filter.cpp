@@ -61,12 +61,15 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::updateFilter(const mbot_lcm_msgs::pose
 {
     bool hasRobotMoved = actionModel_.updateAction(odometry);
     std::cout<<"has moved: "<<hasRobotMoved << std::endl;
-    auto prior = resamplePosteriorDistribution(&map);
-    auto proposal = computeProposalDistribution(prior);
-    posterior_ = computeNormalizedPosterior(proposal, laser, map);
-    // reinvigoration step
-    samplingAugmentation.insert_average_weight(cur_avg_weight);
-    posteriorPose_ = estimatePosteriorPose(posterior_);
+    if(hasRobotMoved){
+        auto prior = resamplePosteriorDistribution(&map);
+        auto proposal = computeProposalDistribution(prior);
+        posterior_ = computeNormalizedPosterior(proposal, laser, map);
+        // reinvigoration step
+        samplingAugmentation.insert_average_weight(cur_avg_weight);
+        posteriorPose_ = estimatePosteriorPose(posterior_);
+    }
+    
     posteriorPose_.utime = odometry.utime;
 
     return posteriorPose_;
