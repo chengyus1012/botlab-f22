@@ -60,7 +60,7 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::updateFilter(const mbot_lcm_msgs::pose
                                                         const OccupancyGrid& map)
 {
     bool hasRobotMoved = actionModel_.updateAction(odometry);
-    std::cout<<"has moved: "<<hasRobotMoved << std::endl;
+    // std::cout<<"has moved: "<<hasRobotMoved << std::endl;
     if(hasRobotMoved){
         auto prior = resamplePosteriorDistribution(&map);
         auto proposal = computeProposalDistribution(prior);
@@ -123,10 +123,8 @@ ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* 
         temp += posterior_[i].weight * posterior_[i].weight;
     }
     Neff = 1.0/temp;
-    if(Neff > (int)kNumParticles_*0.67){
-        std::cout << Neff;
-        std::cout << (int)kNumParticles_*0.67;
-        std::cout << "Enough effective particles.\n";
+    if(Neff > (int)kNumParticles_*0.85){
+        std::cout << " Effective particles: "<< Neff<< " thre: "<< (int)kNumParticles_*0.85<<std::endl;
     }
     else{
         std::cout << "Low variance resampling.\n";
@@ -136,21 +134,14 @@ ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* 
         std::uniform_real_distribution<double> dist(0.0, 1.0 / kNumParticles_);
         double r = dist(generator);
         int count = 0;
-        std::vector<double> cumWeight;
         double c = posterior_[0].weight;
         
         // do low variance resample
         for(int i=0; i<kNumParticles_;i++){
-            double u = r + i/kNumParticles_;
+            double u = r + i*1.0/kNumParticles_;
             while (u>c)
                 c += posterior_[++count].weight;
             prior[i] = posterior_[count];
-            prior[i].weight = sampleWeight;
-            // p.pose.x = posteriorPose_.x + dist(generator);
-            // p.pose.y = posteriorPose_.y + dist(generator);
-            // p.pose.theta = posteriorPose_.theta + dist(generator);
-            // p.pose.utime = posteriorPose_.utime;
-            // p.parent_pose = posteriorPose_;
         }
         
     }
@@ -166,7 +157,7 @@ ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* 
             std::cout << "reinvigorate.\n";
         }
     }
-    std::cout << "Particles resampled\n";    
+    // std::cout << "Particles resampled\n";    
 
 
     return prior;
@@ -181,7 +172,7 @@ ParticleList ParticleFilter::computeProposalDistribution(const ParticleList& pri
     for(auto& p : prior){
         proposal.push_back(actionModel_.applyAction(p));
     }
-    std::cout << "Apply action.\n";
+    // std::cout << "Apply action.\n";
     return proposal;
 }
 
@@ -212,7 +203,7 @@ ParticleList ParticleFilter::computeNormalizedPosterior(const ParticleList& prop
         else
             cur_avg_weight = 0.1*prev_avg_weight + 0.9*cur_avg_weight;
     }
-    std::cout << "Posterior normalized.\n";
+    // std::cout << "Posterior normalized.\n";
     return posterior;
 }
 
@@ -225,7 +216,7 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::estimatePosteriorPose(const ParticleLi
     //////// TODO: Implement your method for computing the final pose estimate based on the posterior distribution
     mbot_lcm_msgs::pose_xyt_t pose;
 
-    double percentage = 0.25;
+    double percentage = 0.1;
     particle_t_comparator comparator;
     ParticleList posterior_sorted = posterior;
     std::sort(posterior_sorted.begin(), posterior_sorted.end(), comparator);
@@ -252,7 +243,7 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::estimatePosteriorPose(const ParticleLi
     pose.y = yMean / totalWeight;
     pose.theta = std::atan2(sinThetaMean, cosThetaMean);
     
-    std::cout << "Mean pose calculated.\n"<<" "<<pose.x << pose.y << pose.theta << std::endl;
+    std::cout << "Mean pose calculated.\n"<<" "<<pose.x<<" " << pose.y <<" "<< pose.theta << std::endl;
     return pose;
 }
 

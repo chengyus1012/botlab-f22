@@ -8,10 +8,10 @@
 
 
 ActionModel::ActionModel(void)
-: k1_(0.0025f)
-, k2_(0.0005f)
-, min_dist_(0.0025)
-, min_theta_(0.02)
+: k1_(0.0025f) //rotation
+, k2_(0.0005f) //translation
+, min_dist_(0.0025) // 0.0025
+, min_theta_(0.02) //0.02
 , initialized_(false)
 {
     //////////////// TODO: Handle any initialization for your ActionModel /////////////////////////
@@ -52,9 +52,9 @@ bool ActionModel::updateAction(const mbot_lcm_msgs::pose_xyt_t& odometry)
 
     bool moved = (dx_!=0 || dy_!=0 || dtheta_!=0);
     if(moved){
-        rot1Std_ = std::sqrt(k1_ * std::abs(rot1_));
-        tranStd_ = std::sqrt(k2_ * std::abs(trans_));
-        rot2Std_ = std::sqrt(k1_ * std::abs(rot2_));
+        rot1Std_ = std::sqrt(k1_ * std::max(std::abs(rot1_), min_theta_));
+        tranStd_ = std::sqrt(k2_ * std::max(std::abs(trans_), min_dist_));
+        rot2Std_ = std::sqrt(k1_ * std::max(std::abs(rot2_), min_theta_));
     }
 
     // xStd_ = sqrt(k1_ * fabs(std::max(dx_, min_dist_)));

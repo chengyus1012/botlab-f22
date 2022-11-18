@@ -35,8 +35,8 @@ OccupancyGridSLAM::OccupancyGridSLAM(int numParticles,
 , lcm_(lcmComm)
 , mapUpdateCount_(0)
 , randomInitialPos_(randomInitialPos)
-, odomResetThreshDist_(0.05)
-, odomResetThreshAng_(0.08)  // ~5 degrees.
+, odomResetThreshDist_(0.1)
+, odomResetThreshAng_(0.1)  // ~5 degrees.
 , mapFile_(mapFile)
 , initialPose_(initialPose)
 {
@@ -149,7 +149,7 @@ void OccupancyGridSLAM::handleLaser(const lcm::ReceiveBuffer* rbuf, const std::s
                 scan_.thetas[i] = 2.0 * M_PI - scan_.thetas[i];
             }
         }
-        incomingScans_.push_back(*scan);
+        incomingScans_.push_back(scan_);
 
         // If we showed the laser error message, then provide another message indicating that laser scans are now
         // being saved
@@ -253,10 +253,10 @@ void OccupancyGridSLAM::runSLAMIteration(void)
     }
 
     // Update odometry to match SLAM, but only if we've been running for a while.
-    if (iters_ > 100)
-    {
-        bool reset = updateOdometry(currentOdometry_, currentPose_);
-    }
+    // if (iters_ > 100)
+    // {
+    //     bool reset = updateOdometry(currentOdometry_, currentPose_);
+    // }
 }
 
 
