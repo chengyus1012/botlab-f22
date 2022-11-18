@@ -46,6 +46,8 @@ private:
     void scoreRay(const adjusted_ray_t& ray, OccupancyGrid& map);
     std::vector<Point<int>> bresenham(const adjusted_ray_t& ray, const OccupancyGrid& map);
     std::vector<Point<int>> divideAndStepAlongRay(const adjusted_ray_t& ray, const OccupancyGrid& map);
+    void increaseCellOdds(int x, int y, OccupancyGrid& map);
+    void decreaseCellOdds(int x, int y, OccupancyGrid& map);
     //////////////////// TODO: Add any private members needed for your occupancy grid mapping algorithm ///////////////
 
 };
