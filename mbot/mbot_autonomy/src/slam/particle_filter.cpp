@@ -123,7 +123,7 @@ ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* 
         temp += posterior_[i].weight * posterior_[i].weight;
     }
     Neff = 1.0/temp;
-    if(Neff > (int)kNumParticles_*0.88){
+    if(Neff > (int)kNumParticles_){
         std::cout << " Effective particles: "<< Neff<< " thre: "<< (int)kNumParticles_*0.95<<std::endl;
     }
     else{
@@ -217,7 +217,7 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::estimatePosteriorPose(const ParticleLi
     //////// TODO: Implement your method for computing the final pose estimate based on the posterior distribution
     mbot_lcm_msgs::pose_xyt_t pose;
 
-    double percentage = 0.08;
+    double percentage = 0.13;
     particle_t_comparator comparator;
     ParticleList posterior_sorted = posterior;
     std::sort(posterior_sorted.begin(), posterior_sorted.end(), comparator);
