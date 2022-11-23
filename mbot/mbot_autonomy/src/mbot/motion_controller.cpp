@@ -163,12 +163,12 @@ public:
         // printf("alpha: %f\n", alpha);
 
         // // To avoid weird behaviour at alpha=pi/2, because it is a common case
-        // float margin = 2 * M_PI / 180;
-        // if (fabs(alpha) > M_PI_2 + margin)
-        // {
-        //     alpha = wrap_to_pi(alpha - M_PI);
-        //     vel_sign = -1;
-        // }
+        float margin = 2 * M_PI / 180;
+        if (fabs(alpha) > M_PI_2 + margin)
+        {
+            alpha = wrap_to_pi(alpha - M_PI);
+            vel_sign = -1;
+        }
         float beta = wrap_to_pi(target.theta -(alpha + pose.theta));
         float fwd_vel = vel_sign *  pid[0] * d_fwd;
         float turn_vel = pid[1] * alpha + pid[2] * beta;
@@ -416,7 +416,7 @@ int main(int argc, char** argv)
             mbot_lcm_msgs::mbot_motor_command_t cmd = controller.updateCommand();
             // Limit command values
             // Fwd vel
-            float max_lin_vel = 0.25;
+            float max_lin_vel = 0.15;
             if (cmd.trans_v > max_lin_vel) cmd.trans_v = max_lin_vel;
             else if (cmd.trans_v < -max_lin_vel) cmd.trans_v = -max_lin_vel;
 
