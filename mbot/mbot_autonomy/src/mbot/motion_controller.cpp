@@ -164,11 +164,11 @@ public:
 
         // // To avoid weird behaviour at alpha=pi/2, because it is a common case
         float margin = 2 * M_PI / 180;
-        if (fabs(alpha) > M_PI_2 + margin)
-        {
-            alpha = wrap_to_pi(alpha - M_PI);
-            vel_sign = -1;
-        }
+        // if (fabs(alpha) > M_PI_2 + margin)
+        // {
+        //     alpha = wrap_to_pi(alpha - M_PI);
+        //     vel_sign = -1;
+        // }
         float beta = wrap_to_pi(target.theta -(alpha + pose.theta));
         float fwd_vel = vel_sign *  pid[0] * d_fwd;
         float turn_vel = pid[1] * alpha + pid[2] * beta;
@@ -395,7 +395,7 @@ private:
     void subscribeToLcm()
     {
         lcmInstance->subscribe(ODOMETRY_CHANNEL, &MotionController::handleOdometry, this);
-        // lcmInstance->subscribe(SLAM_POSE_CHANNEL, &MotionController::handlePose, this);
+        lcmInstance->subscribe(SLAM_POSE_CHANNEL, &MotionController::handlePose, this);
         lcmInstance->subscribe(CONTROLLER_PATH_CHANNEL, &MotionController::handlePath, this);
         lcmInstance->subscribe(MBOT_TIMESYNC_CHANNEL, &MotionController::handleTimesync, this);
     }
@@ -416,12 +416,12 @@ int main(int argc, char** argv)
             mbot_lcm_msgs::mbot_motor_command_t cmd = controller.updateCommand();
             // Limit command values
             // Fwd vel
-            float max_lin_vel = 0.15;
+            float max_lin_vel = 0.25;
             if (cmd.trans_v > max_lin_vel) cmd.trans_v = max_lin_vel;
             else if (cmd.trans_v < -max_lin_vel) cmd.trans_v = -max_lin_vel;
 
             // Angular vel
-            float max_ang_vel = M_PI/4;
+            float max_ang_vel = M_PI/2;
             if (cmd.angular_v > max_ang_vel) cmd.angular_v = max_ang_vel;
             else if (cmd.angular_v < -max_ang_vel) cmd.angular_v = -max_ang_vel;
 
