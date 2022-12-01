@@ -35,8 +35,10 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
             childNode->parent = nextNode;
 
             if(*childNode == *goalNode){
+                openList.push(childNode)
                 goalNode = childNode;
                 found_path = true;
+                break
             }
 
             childNode->g_cost = g_cost(nextNode, childNode, distances, params);
