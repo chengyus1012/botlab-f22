@@ -85,6 +85,21 @@ target_link_libraries(motion_planning_server
 target_include_directories(motion_planning_server PRIVATE
   include
 )
+# Obstacle distance grid test
+add_executable(obstacle_distance_grid_test src/planning/obstacle_distance_grid_test.cpp
+  src/slam/occupancy_grid.cpp
+  src/planning/obstacle_distance_grid.cpp
+  src/planning/astar.cpp
+)
+target_link_libraries(obstacle_distance_grid_test
+  mbot_lcm_msgs-cpp
+  common_utils
+  lcm
+  ${CMAKE_THREAD_LIBS_INIT}
+)
+target_include_directories(obstacle_distance_grid_test PRIVATE
+  include
+)
 
 # TODO: move out of this project!
 # TIMESYNC

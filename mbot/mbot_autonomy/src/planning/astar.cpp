@@ -3,7 +3,6 @@
 #include <chrono>
 
 using namespace std::chrono;
-// https://www.geeksforgeeks.org/a-search-algorithm/
 mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
                                              mbot_lcm_msgs::pose_xyt_t goal,
                                              const ObstacleDistanceGrid& distances,
@@ -35,17 +34,17 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
             childNode->parent = nextNode;
 
             if(*childNode == *goalNode){
-                openList.push(childNode)
+                openList.push(childNode);
                 goalNode = childNode;
                 found_path = true;
-                break
+                break;
             }
 
             childNode->g_cost = g_cost(nextNode, childNode, distances, params);
             childNode->h_cost = h_cost(childNode, goalNode, distances);
-
+            Node* existingNode = NULL;
             if(openList.is_member(childNode)){
-                Node* existingNode = openList.get_member(childNode);
+                existingNode = openList.get_member(childNode);
                 if(childNode->f_cost() > existingNode->f_cost()){
                     continue;
                 }
@@ -56,8 +55,9 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
                     continue;
                 }
             }
-            openList.push(childNode)
+            openList.push(childNode);
         }
+        closedList.push_back(nextNode);
     }
 
     mbot_lcm_msgs::robot_path_t path;
@@ -81,7 +81,7 @@ double h_cost(Node* from, Node* goal, const ObstacleDistanceGrid& distances)
     int dx = abs(goal->cell.x - from->cell.x);
     int dy = abs(goal->cell.y - from->cell.y);
     double straight_distance = 1.0;
-    double diag_distance = 1.41;
+    double diag_distance = 1.414;
 
     double h_cost = straight_distance*(dx + dy) + (diag_distance - 2*straight_distance) * std::min(dx, dy);
     return h_cost;
@@ -151,7 +151,9 @@ std::vector<Node*> prune_node_path(std::vector<Node*> nodePath){
     std::vector<Node*> newPath;
     newPath.push_back(nodePath[0]);
 
-    Node* prevNode, currNode, nextNode;
+    Node* prevNode = NULL;
+    Node* currNode = NULL;
+    Node* nextNode = NULL;
     int prev_dx, prev_dy, next_dx, next_dy;
     for(int i=1; i<nodePath.size()-1; i++){
         //dont add node if direction doesnt change
@@ -168,7 +170,7 @@ std::vector<Node*> prune_node_path(std::vector<Node*> nodePath){
             newPath.push_back(currNode);
         }
     }
-    return newPath
+    return newPath;
 }
 
 // get poses from path
