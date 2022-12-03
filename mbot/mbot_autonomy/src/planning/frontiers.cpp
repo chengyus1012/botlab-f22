@@ -122,14 +122,38 @@ frontier_processing_t plan_path_to_frontier(const std::vector<frontier_t>& front
 
     // First, choose the frontier to go to
     // Initial alg: find the nearest one
+    std::vector<Point<double>> centr_list;
+    for(auto frontier : frontiers){
+        centr_list.push_back(find_frontier_centroid(frontier));
+    } // global central position
 
-    // Returnable path
-    mbot_lcm_msgs::robot_path_t path;
-    path.utime = utime_now();
-    path.path_length = 1;
-    path.path.push_back(robotPose);
+    CompareCentroids CentrComparator(robotPose);
+
+    std::sort(centr_list.begin(), centr_list.end(), CentrComparator);
+    
+
+    bool path_valid = false;
+    int i = 0;
     int unreachable_frontiers = 0;
+    mbot_lcm_msgs::robot_path_t path;
+    while (!path_valid && i<centr_list.size())
+    {
+        Point<double> closest_centr = centr_list[i];
+        mbot_lcm_msgs::pose_xyt_t goal;
 
+        goal.x = closest_centr.x;
+        goal.y = closest_centr.y;
+        goal.theta = 0;
+        path = planner.planPath(robotPose, goal);
+        // path.utime = utime_now();
+        // path.path.push_back(robotPose);
+        if(path.path_length <= 1){
+            i++;
+            unreachable_frontiers++;
+        }else{
+            break;
+        }
+    }
     
     return frontier_processing_t(path, unreachable_frontiers);
 }
