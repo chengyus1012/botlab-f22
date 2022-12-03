@@ -114,6 +114,25 @@ target_include_directories(timesync PRIVATE
   include
 )
 
+# astar
+add_executable(astar_test src/planning/astar_test.cpp
+  src/planning/exploration.cpp
+  src/planning/motion_planner.cpp 
+  src/planning/frontiers.cpp 
+  src/slam/occupancy_grid.cpp 
+  src/planning/obstacle_distance_grid.cpp
+  src/planning/astar.cpp 
+)
+target_link_libraries(astar_test
+  mbot_lcm_msgs-cpp
+  common_utils
+  lcm
+  ${CMAKE_THREAD_LIBS_INIT}
+)
+target_include_directories(astar_test PRIVATE
+  include
+)
+
 # NOTICE: This is a temporary patch to remove the 
 #     gui from this codebase
 add_library(autonomy_lib STATIC 

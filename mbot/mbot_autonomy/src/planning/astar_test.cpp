@@ -52,6 +52,8 @@ bool test_convex_grid(void);
 bool test_maze_grid(void);
 bool test_saved_poses(const std::string& mapFile, const std::string& posesFile, const std::string& testName);
 
+using namespace mbot_lcm_msgs;
+
 robot_path_t timed_find_path(const pose_xyt_t& start, 
                              const pose_xyt_t& end, 
                              const MotionPlanner& planner, 
