@@ -65,6 +65,7 @@ bool MotionPlanner::isValidGoal(const mbot_lcm_msgs::pose_xyt_t& goal) const
         // And is far enough from obstacles that the robot can physically occupy the space
         // Add an extra cell to account for discretization error and make motion a little safer by not trying to
         // completely snuggle up against the walls in the motion plan
+        std::cout <<" obstacle distance for current cell: " <<distances_(goalCell.x, goalCell.y)<<std::endl;
         return distances_(goalCell.x, goalCell.y) > params_.robotRadius;
     }
     
@@ -105,6 +106,6 @@ void MotionPlanner::setMap(const OccupancyGrid& map)
 void MotionPlanner::setParams(const MotionPlannerParams& params)
 {
     searchParams_.minDistanceToObstacle = params_.robotRadius;
-    searchParams_.maxDistanceWithCost = 10.0 * searchParams_.minDistanceToObstacle;
+    searchParams_.maxDistanceWithCost = 2.0 * searchParams_.minDistanceToObstacle;
     searchParams_.distanceCostExponent = 1.0;
 }

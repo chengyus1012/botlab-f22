@@ -26,6 +26,7 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
     bool found_path = false;
     while(!openList.empty() && found_path == false)
     {
+
         Node* nextNode = openList.pop();
 
         std::vector<Node*> children = expand_node(nextNode, distances, params);
@@ -34,6 +35,7 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
             childNode->parent = nextNode;
 
             if(*childNode == *goalNode){
+                std::cout << "find goal node"<<childNode->cell.x<<" "<<childNode->cell.y << std::endl; 
                 openList.push(childNode);
                 goalNode = childNode;
                 found_path = true;
@@ -64,8 +66,11 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
     path.utime = start.utime;
 
     if(found_path){
+        std::cout<<"openList len = "<<openList.elements.size()<<std::endl;
         std::vector<Node*> nodePath = extract_node_path(goalNode, startNode);
+        std::cout<<"nodePath len = "<<nodePath.size()<<std::endl;
         std::vector<Node*> prunedNodePath = prune_node_path(nodePath);
+        std::cout<<"pruned len = "<<prunedNodePath.size()<<std::endl;
         path.path = extract_pose_path(prunedNodePath, distances);
     }else{
         std::cout << "did not find path :< \n"<< std::endl;
@@ -136,8 +141,7 @@ std::vector<Node*> extract_node_path(Node* goal_node, Node* start_node)
     std::vector<Node*> path;
     Node* curr_node = goal_node;
 
-    while (!(*curr_node == *start_node))
-    {
+    while (!(*curr_node == *start_node)){
         path.push_back(curr_node);
         curr_node = curr_node->parent;
     }
@@ -170,6 +174,8 @@ std::vector<Node*> prune_node_path(std::vector<Node*> nodePath){
             newPath.push_back(currNode);
         }
     }
+
+    newPath.push_back(nodePath.back());
     return newPath;
 }
 
