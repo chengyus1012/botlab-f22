@@ -116,7 +116,7 @@ int BotGui::onMouseEvent(vx_layer_t* layer,
     // If an Right-click, send a target to the A* planner
     else if((event->button_mask & VX_BUTTON3_MASK)) // && (event->modifiers == 0)
     {
-        /*
+        
         std::cout << "Planning path to " << worldPoint << "...";
         int64_t startTime = utime_now();
         pose_xyt_t target;
@@ -130,7 +130,7 @@ int BotGui::onMouseEvent(vx_layer_t* layer,
         distances_ = planner.obstacleDistances();
         lcmInstance_->publish(CONTROLLER_PATH_CHANNEL, &plannedPath);
         
-        std::cout << "completed in " << ((utime_now() - startTime) / 1000) << "ms\n";*/
+        std::cout << "completed in " << ((utime_now() - startTime) / 1000) << "ms\n";
 
         //Instead of the ROB550 path planning code, send the goal to the BOTGUI GOAL CHANNEL (so LCM server can receive it) 
         mbot_lcm_msgs::pose_xyt_t target;
