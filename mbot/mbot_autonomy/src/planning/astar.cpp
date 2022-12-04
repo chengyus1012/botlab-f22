@@ -17,6 +17,7 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
 
     PriorityQueue openList;
     std::vector<Node*> closedList;
+    std::vector<Node*> searchedList;
 
     startNode->g_cost = 0;
     startNode->h_cost = h_cost(startNode, goalNode, distances);
@@ -27,39 +28,14 @@ mbot_lcm_msgs::robot_path_t search_for_path(mbot_lcm_msgs::pose_xyt_t start,
     while(!openList.empty() && found_path == false)
     {
 
-        Node* nextNode = openList.pop();
-
-        std::vector<Node*> children = expand_node(nextNode, distances, params);
-
-        for(auto &&childNode : children){
-            childNode->parent = nextNode;
-
-            if(*childNode == *goalNode){
-                std::cout << "find goal node"<<childNode->cell.x<<" "<<childNode->cell.y << std::endl; 
-                openList.push(childNode);
-                goalNode = childNode;
-                found_path = true;
-                break;
-            }
-
-            childNode->g_cost = g_cost(nextNode, childNode, distances, params);
-            childNode->h_cost = h_cost(childNode, goalNode, distances);
-            Node* existingNode = NULL;
-            if(openList.is_member(childNode)){
-                existingNode = openList.get_member(childNode);
-                if(childNode->f_cost() > existingNode->f_cost()){
-                    continue;
-                }
-            }
-            if(is_in_list(childNode, closedList)){
-                existingNode = get_from_list(childNode, closedList);
-                if(childNode->f_cost() > existingNode->f_cost()){
-                    continue;
-                }
-            }
-            openList.push(childNode);
+        Node* currentNode = openList.pop();
+        if(!(*currentNode == *goalNode)){
+            closedList.push_back(currentNode);
+            expand_node(currentNode, goalNode, distances, params, openList, closedList, searchedList);
+        }else{
+            goalNode = currentNode;
+            found_path = true;
         }
-        closedList.push_back(nextNode);
     }
 
     mbot_lcm_msgs::robot_path_t path;
@@ -116,23 +92,38 @@ double g_cost(Node* from, Node* goal, const ObstacleDistanceGrid& distances, con
     return g_cost;
 }
 
-std::vector<Node*> expand_node(Node* node, const ObstacleDistanceGrid& distances, const SearchParams& params)
+void expand_node(Node* node, Node* goalNode, const ObstacleDistanceGrid& distances, const SearchParams& params, PriorityQueue& openList, std::vector<Node*>& closedList, std::vector<Node*>& searchedList)
 {
     // TODO: Return children of a given node that are not obstacles
     int dx[8] = {1, -1, 0, 0, 1, -1, 1, -1};
     int dy[8] = {0, 0, 1, -1, 1, 1, -1, -1};
 
-    std::vector<Node*> children;
-    for(int i=0; i<8; i++){
+    for(int i=0; i<8; i++)
+    {
         int x = node->cell.x + dx[i];
         int y = node->cell.y + dy[i];
-
-        if(distances.isCellInGrid(x, y) && distances(x, y) > params.minDistanceToObstacle){
-            Node* childNode = new Node(x, y);
-            children.push_back(childNode);
+        Node* neighbor = new Node(x,y);
+        if(is_in_list(neighbor, searchedList))
+            neighbor = get_from_list(neighbor, searchedList);
+        
+        if(!is_in_list(neighbor, closedList) && distances.isCellInGrid(x, y) && distances(x, y) > params.minDistanceToObstacle)
+        {
+            if(!is_in_list(neighbor, searchedList))
+            {
+                neighbor->g_cost = g_cost(node, neighbor, distances, params);
+                neighbor->h_cost = h_cost(neighbor, goalNode, distances);
+                neighbor->parent = node;
+                openList.push(neighbor);
+                searchedList.push_back(neighbor);
+            }
+            else if(neighbor->g_cost > g_cost(node, neighbor, distances, params))
+            {
+                neighbor->g_cost = g_cost(node, neighbor, distances, params);
+                neighbor->parent = node;
+                openList.push(neighbor);
+            }
         }
     }
-    return children;
 }
 
 std::vector<Node*> extract_node_path(Node* goal_node, Node* start_node)
@@ -142,8 +133,10 @@ std::vector<Node*> extract_node_path(Node* goal_node, Node* start_node)
     Node* curr_node = goal_node;
 
     while (!(*curr_node == *start_node)){
+        
         path.push_back(curr_node);
         curr_node = curr_node->parent;
+        // std::cout << " found parent"<<std::endl;
     }
     std::reverse(path.begin(), path.end());
     return path;
