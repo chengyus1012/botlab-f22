@@ -65,6 +65,7 @@ double h_cost(Node* from, Node* goal, const ObstacleDistanceGrid& distances)
     double diag_distance = 1.414;
 
     double h_cost = straight_distance*(dx + dy) + (diag_distance - 2*straight_distance) * std::min(dx, dy);
+    h_cost *= distances.metersPerCell();
     return h_cost;
 }
 double g_cost(Node* from, Node* goal, const ObstacleDistanceGrid& distances, const SearchParams& params)
@@ -88,7 +89,7 @@ double g_cost(Node* from, Node* goal, const ObstacleDistanceGrid& distances, con
         penalization = pow(params.maxDistanceWithCost - distances(goal->cell.x, goal->cell.y), params.distanceCostExponent);
     }
 
-    g_cost += penalization;
+    g_cost = g_cost*distances.metersPerCell() + penalization;
     return g_cost;
 }
 
