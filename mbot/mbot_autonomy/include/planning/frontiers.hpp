@@ -68,6 +68,7 @@ frontier_processing_t plan_path_to_frontier(const std::vector<frontier_t>& front
 
 
 Point<double> find_frontier_centroid(const frontier_t& frontier);
+Point<double> find_valid_goal(const frontier_t& frontier, const OccupancyGrid& map, const mbot_lcm_msgs::pose_xyt_t& robotPose);
 
 bool is_centroid_reachable(const Point<double>& centroid, 
                             const mbot_lcm_msgs::pose_xyt_t& robotPose,

@@ -2,6 +2,7 @@
 #include <planning/motion_planner.hpp>
 #include <utils/grid_utils.hpp>
 #include <common_utils/timestamp.h>
+#include <common_utils/geometric/angle_functions.hpp>
 #include <slam/occupancy_grid.hpp>
 #include <mbot_lcm_msgs/robot_path_t.hpp>
 #include <queue>
@@ -122,27 +123,27 @@ frontier_processing_t plan_path_to_frontier(const std::vector<frontier_t>& front
 
     // First, choose the frontier to go to
     // Initial alg: find the nearest one
-    std::vector<Point<double>> centr_list;
+    std::vector<Point<double>> goal_list;
     for(auto frontier : frontiers){
-        centr_list.push_back(find_frontier_centroid(frontier));
+        goal_list.push_back(find_valid_goal(frontier, map, robotPose));
     } // global central position
 
     CompareCentroids CentrComparator(robotPose);
 
-    std::sort(centr_list.begin(), centr_list.end(), CentrComparator);
+    std::sort(goal_list.begin(), goal_list.end(), CentrComparator);
     
 
     bool path_valid = false;
     int i = 0;
     int unreachable_frontiers = 0;
     mbot_lcm_msgs::robot_path_t path;
-    while (!path_valid && i<centr_list.size())
+    while (!path_valid && i<goal_list.size())
     {
-        Point<double> closest_centr = centr_list[i];
+        Point<double> closest_point = goal_list[i];
         mbot_lcm_msgs::pose_xyt_t goal;
 
-        goal.x = closest_centr.x;
-        goal.y = closest_centr.y;
+        goal.x = closest_point.x;
+        goal.y = closest_point.y;
         goal.theta = 0;
         path = planner.planPath(robotPose, goal);
         // path.utime = utime_now();
@@ -224,6 +225,42 @@ frontier_t grow_frontier(Point<int> cell, const OccupancyGrid& map, std::set<Poi
     }
     
     return frontier;
+}
+
+Point<double> find_valid_goal(const frontier_t& frontier, const OccupancyGrid& map, const mbot_lcm_msgs::pose_xyt_t& robotPose)
+{
+    int n = frontier.cells.size();
+    Point<double> start = frontier.cells[0];
+    Point<double> end = frontier.cells[n-1];
+    Point<double> center = find_frontier_centroid(frontier);
+    Point<double> goal;
+
+    double frontier_angle = atan2(end.y - start.y, end.x - start.x);
+    double theta = M_PI_2 + frontier_angle;
+    
+    // frontier_angle = wrap_to_2pi(frontier_angle);
+    // double bot_angle = wrap_to_2pi(robotPose.theta);
+    double dis = 0.25;
+    Point<double> positive_direction(start.x + dis*cos(theta), start.y + dis * sin(theta));
+    Point<int> positive_cell = global_position_to_grid_cell(positive_direction, map);
+    Point<double> negative_direction(start.x - dis*cos(theta), start.y - dis * sin(theta));
+    Point<int> negative_cell = global_position_to_grid_cell(negative_direction, map);
+
+    if(map.isCellInGrid(positive_cell.x, positive_cell.y))
+    {
+        goal = positive_direction;
+    }
+    else if (map.isCellInGrid(negative_cell.x, negative_cell.y))
+    {
+        goal = negative_direction;
+    }
+    else
+    {
+        std::cout << " can not find valid goal" << std::endl;
+    }
+
+    return goal;
+
 }
 
 Point<double> find_frontier_centroid(const frontier_t& frontier)
