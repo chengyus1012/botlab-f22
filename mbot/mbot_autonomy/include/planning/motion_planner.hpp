@@ -116,6 +116,7 @@ public:
 
     bool isValidGoal(const Point<int>& goalCell) const;
     
+    SearchParams searchparams(void) const {return searchParams_;}
     /**
     * isPathSafe checks if a path that was previously planned is still safe to execute based on updated map
     * information.

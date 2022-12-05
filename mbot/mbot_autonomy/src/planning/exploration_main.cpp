@@ -11,7 +11,7 @@ int main(int argc, char** argv)
 
     getopt_t *gopt = getopt_create();
     getopt_add_bool(gopt, 'h', "help", 0, "Show this help");
-    getopt_add_int(gopt, 'n', kTeamNumArg, "-1", "Team number of the robot doing the exploration.");
+    getopt_add_int(gopt, 'n', kTeamNumArg, "-9", "Team number of the robot doing the exploration.");
 
     // If help was requested or the command line is invalid, display the help message and exit
     if (!getopt_parse(gopt, argc, argv, 1) || getopt_get_bool(gopt, "help")) {

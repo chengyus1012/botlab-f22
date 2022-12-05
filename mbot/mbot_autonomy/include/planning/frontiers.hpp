@@ -4,10 +4,14 @@
 #include <common_utils/geometric/point.hpp>
 #include <mbot_lcm_msgs/pose_xyt_t.hpp>
 #include <mbot_lcm_msgs/robot_path_t.hpp>
+#include <planning/obstacle_distance_grid.hpp>
+#include <planning/astar.hpp>
 #include <vector>
+#include <queue>
 
 class MotionPlanner;
 class OccupancyGrid;
+typedef Point<int> cell_t;
 
 /**
 * frontier_t represents a frontier in the map. A frontier is a collection of contiguous cells in the occupancy grid that
@@ -27,6 +31,81 @@ struct frontier_processing_t
     }
     mbot_lcm_msgs::robot_path_t path_selected;
     int num_unreachable_frontiers;
+};
+
+struct f_Node 
+{
+    double g_cost;
+    cell_t cell;
+    f_Node(int a, int b) : g_cost(1.0E16), cell(a,b) {}
+
+    // double f_cost(void) const { return g_cost + h_cost; }
+    bool operator==(const f_Node& rhs) const
+    {
+        return (cell == rhs.cell);
+    }
+};
+
+struct f_Compare_Node
+{
+    bool operator() (f_Node* n1, f_Node* n2)
+    {
+        return (n1->g_cost > n2->g_cost);
+    }
+};
+
+struct f_PriorityQueue
+{
+    std::priority_queue<f_Node*, std::vector<f_Node*>, f_Compare_Node> Q;
+    std::vector<f_Node*> elements;
+
+    bool empty()
+    {
+        return Q.empty();
+    }
+
+    bool is_member(f_Node* n)
+    {
+        for (auto &&node : elements)
+        {
+            if (*n == *node) return true;
+        }
+        return false;
+    }
+
+    f_Node* get_member(f_Node* n)
+    {
+        for (auto &&node : elements)
+        {
+            if (*n == *node) return node;
+        }
+        return NULL;
+    }
+
+    f_Node* pop()
+    {
+        f_Node* n = Q.top();
+        Q.pop();
+        int idx = -1;
+        // Remove the node from the elements vector
+        for (unsigned i = 0; i < elements.size(); i++)
+        {
+            if (*elements[i] == *n)
+            {
+                idx = i;
+                break;
+            }
+        }
+        elements.erase(elements.begin() + idx);
+        return n;
+        
+    }
+
+    void push(f_Node* n)
+    {
+        Q.push(n);
+        elements.push_back(n);
+    }
 };
 
 
@@ -68,8 +147,17 @@ frontier_processing_t plan_path_to_frontier(const std::vector<frontier_t>& front
 
 
 Point<double> find_frontier_centroid(const frontier_t& frontier);
-Point<double> find_valid_goal(const frontier_t& frontier, const OccupancyGrid& map, const mbot_lcm_msgs::pose_xyt_t& robotPose);
-
+/**
+* find_valid_goal projection method to find a valid goal (not work well)
+*/
+Point<double> find_valid_goal_projection(const frontier_t& frontier, const OccupancyGrid& map, const mbot_lcm_msgs::pose_xyt_t& robotPose);
+Point<double> find_valid_goal_search(const frontier_t& frontier, 
+                                    const OccupancyGrid& map, 
+                                    const mbot_lcm_msgs::pose_xyt_t& robotPose, 
+                                    const MotionPlanner& planner);
+double g_cost_frontier(f_Node* from, f_Node* goal, const ObstacleDistanceGrid& distances, const SearchParams& params);
+bool f_is_in_list(f_Node* node, std::vector<f_Node*> list);
+f_Node* f_get_from_list(f_Node* node, std::vector<f_Node*> list);
 bool is_centroid_reachable(const Point<double>& centroid, 
                             const mbot_lcm_msgs::pose_xyt_t& robotPose,
                             const OccupancyGrid& map,

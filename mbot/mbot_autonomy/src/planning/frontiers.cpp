@@ -125,7 +125,7 @@ frontier_processing_t plan_path_to_frontier(const std::vector<frontier_t>& front
     // Initial alg: find the nearest one
     std::vector<Point<double>> goal_list;
     for(auto frontier : frontiers){
-        goal_list.push_back(find_valid_goal(frontier, map, robotPose));
+        goal_list.push_back(find_valid_goal_search(frontier, map, robotPose, planner));
     } // global central position
 
     CompareCentroids CentrComparator(robotPose);
@@ -148,10 +148,14 @@ frontier_processing_t plan_path_to_frontier(const std::vector<frontier_t>& front
         path = planner.planPath(robotPose, goal);
         // path.utime = utime_now();
         // path.path.push_back(robotPose);
-        if(path.path_length <= 1){
+        if(path.path_length <= 1)
+        {
             i++;
             unreachable_frontiers++;
-        }else{
+        }
+        else
+        {
+            path_valid = true;
             break;
         }
     }
@@ -227,7 +231,7 @@ frontier_t grow_frontier(Point<int> cell, const OccupancyGrid& map, std::set<Poi
     return frontier;
 }
 
-Point<double> find_valid_goal(const frontier_t& frontier, const OccupancyGrid& map, const mbot_lcm_msgs::pose_xyt_t& robotPose)
+Point<double> find_valid_goal_projection(const frontier_t& frontier, const OccupancyGrid& map, const mbot_lcm_msgs::pose_xyt_t& robotPose)
 {
     int n = frontier.cells.size();
     Point<double> start = frontier.cells[0];
@@ -263,6 +267,99 @@ Point<double> find_valid_goal(const frontier_t& frontier, const OccupancyGrid& m
 
 }
 
+Point<double> find_valid_goal_search(const frontier_t& frontier, 
+                                    const OccupancyGrid& map, 
+                                    const mbot_lcm_msgs::pose_xyt_t& robotPose, 
+                                    const MotionPlanner& planner)
+{
+    int dx[8] = {1, -1, 0, 0, 1, -1, 1, -1};
+    int dy[8] = {0, 0, 1, -1, 1, 1, -1, -1};
+
+    Point<double> center = find_frontier_centroid(frontier);
+    cell_t center_cell = global_position_to_grid_cell(center, map);
+    f_Node* center_node = new f_Node(center_cell.x, center_cell.y);
+    f_Node* valid_node;
+
+    ObstacleDistanceGrid distances = planner.obstacleDistances();
+    f_PriorityQueue openList;
+    std::vector<f_Node*> closedList;
+    std::vector<f_Node*> searchedList;
+    center_node->g_cost = 0;
+    openList.push(center_node);
+
+    bool found_cell = false;
+    while(!openList.empty() && found_cell == false)
+    {
+        f_Node* currentNode = openList.pop();
+        int x = currentNode->cell.x;
+        int y = currentNode->cell.y;
+
+        if(distances.isCellInGrid(x,y) && distances(x,y)>planner.searchparams().minDistanceToObstacle)
+        {
+            found_cell == true;
+            valid_node = currentNode;
+        }
+        else
+        {
+            closedList.push_back(currentNode);
+            for(int i=0; i<8; i++)
+            {
+                int x = currentNode->cell.x + dx[i];
+                int y = currentNode->cell.y + dy[i];
+                f_Node* neighbor = new f_Node(x,y);
+                if(f_is_in_list(neighbor, searchedList))
+                    neighbor = f_get_from_list(neighbor, searchedList);
+                
+                if(!f_is_in_list(neighbor, closedList) && distances.isCellInGrid(x, y) && distances(x, y) > planner.searchparams().minDistanceToObstacle)
+                {
+                    if(!f_is_in_list(neighbor, searchedList))
+                    {
+                        neighbor->g_cost = g_cost_frontier(currentNode, neighbor, distances, planner.searchparams());
+                        openList.push(neighbor);
+                        searchedList.push_back(neighbor);
+                    }
+                    else if(neighbor->g_cost > g_cost_frontier(currentNode, neighbor, distances, planner.searchparams()))
+                    {
+                        neighbor->g_cost = g_cost_frontier(currentNode, neighbor, distances, planner.searchparams());
+
+                        openList.push(neighbor);
+                    }
+                }
+            }
+
+        }
+        
+    }
+    cell_t valid_cell = valid_node->cell;
+    Point<double> valid_position = grid_position_to_global_position(valid_cell, map);
+    return valid_position;
+}
+
+double g_cost_frontier(f_Node* from, f_Node* goal, const ObstacleDistanceGrid& distances, const SearchParams& params)
+{
+    // TODO: Return calculated g cost
+    double g_cost = from->g_cost;
+
+    int dx = abs(goal->cell.x - from->cell.x);
+    int dy = abs(goal->cell.y - from->cell.y);
+
+    if(dx == 1 && dy == 1){
+        g_cost += 1.41;
+    }else{
+        g_cost += 1.0;
+    }
+
+    // Penalize if close to obstacle
+    double penalization = 0.0;
+    if(distances(goal->cell.x, goal->cell.y) <= params.maxDistanceWithCost)
+    {
+        penalization = (params.maxDistanceWithCost - distances(goal->cell.x, goal->cell.y)) * params.distanceCostExponent;
+    }
+
+    g_cost = g_cost*distances.metersPerCell() + penalization;
+    return g_cost;
+}
+
 Point<double> find_frontier_centroid(const frontier_t& frontier)
 {
     // Using the mid point of the frontier
@@ -273,4 +370,23 @@ Point<double> find_frontier_centroid(const frontier_t& frontier)
     printf("Mid point of frontier: (%f,%f)\n", mid_point.x, mid_point.y);
 
     return mid_point;
+}
+
+bool f_is_in_list(f_Node* node, std::vector<f_Node*> list)
+{
+    for (auto &&item : list)
+    {
+        if (*node == *item) return true;
+    }
+    return false;
+}
+
+f_Node* f_get_from_list(f_Node* node, std::vector<f_Node*> list)
+{
+    for (auto &&n : list)
+    {
+        if (*node == *n) return n;
+    }
+    return NULL;
+    
 }

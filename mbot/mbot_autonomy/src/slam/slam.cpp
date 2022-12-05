@@ -253,10 +253,10 @@ void OccupancyGridSLAM::runSLAMIteration(void)
     }
 
     // Update odometry to match SLAM, but only if we've been running for a while.
-    if (iters_ > 100)
-    {
-        bool reset = updateOdometry(currentOdometry_, currentPose_);
-    }
+    // if (iters_ > 100)
+    // {
+    //     bool reset = updateOdometry(currentOdometry_, currentPose_);
+    // }
 }
 
 
