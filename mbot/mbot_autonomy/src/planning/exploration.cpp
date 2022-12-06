@@ -60,7 +60,7 @@ Exploration::Exploration(int32_t teamNumber,
     lcmInstance_->publish(EXPLORATION_STATUS_CHANNEL, &status);
     
     MotionPlannerParams params;
-    params.robotRadius = 0.15;
+    params.robotRadius = 0.05;
     planner_.setParams(params);
 
     // To prevent the exploration finishing on the start

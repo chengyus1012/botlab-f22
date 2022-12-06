@@ -10,7 +10,7 @@
 #include <cassert>
 
 
-bool is_frontier_cell(int x, int y, const OccupancyGrid& map);
+
 frontier_t grow_frontier(Point<int> cell, const OccupancyGrid& map, std::set<Point<int>>& visitedFrontiers);
 mbot_lcm_msgs::robot_path_t path_to_frontier(const frontier_t& frontier,
                                               const mbot_lcm_msgs::pose_xyt_t& pose,
@@ -123,12 +123,18 @@ frontier_processing_t plan_path_to_frontier(const std::vector<frontier_t>& front
 
     // First, choose the frontier to go to
     // Initial alg: find the nearest one
+    CompareCentroids CentrComparator(robotPose);
     std::vector<Point<double>> goal_list;
+    bool cell_found = false;
     for(auto frontier : frontiers){
-        goal_list.push_back(find_valid_goal_search(frontier, map, robotPose, planner));
+        auto temp = frontier;
+        std::sort(temp.cells.begin(), temp.cells.end(), CentrComparator);
+        goal_list.push_back(find_valid_goal_search(temp, map, robotPose, planner, cell_found));
+        if(cell_found == true)
+            break;
     } // global central position
 
-    CompareCentroids CentrComparator(robotPose);
+    
 
     std::sort(goal_list.begin(), goal_list.end(), CentrComparator);
     
@@ -156,6 +162,7 @@ frontier_processing_t plan_path_to_frontier(const std::vector<frontier_t>& front
         else
         {
             path_valid = true;
+            std::cout << "current goal: " << goal.x<< " " <<goal.y<< std::endl;
             break;
         }
     }
@@ -270,64 +277,82 @@ Point<double> find_valid_goal_projection(const frontier_t& frontier, const Occup
 Point<double> find_valid_goal_search(const frontier_t& frontier, 
                                     const OccupancyGrid& map, 
                                     const mbot_lcm_msgs::pose_xyt_t& robotPose, 
-                                    const MotionPlanner& planner)
+                                    const MotionPlanner& planner, bool& flag)
 {
-    int dx[8] = {1, -1, 0, 0, 1, -1, 1, -1};
-    int dy[8] = {0, 0, 1, -1, 1, 1, -1, -1};
+    int dx[4] = {1, -1, 0, 0};
+    int dy[4] = {0, 0, 1, -1};
 
-    Point<double> center = find_frontier_centroid(frontier);
+    int count = 0;
+    // Point<double> center = find_frontier_centroid(frontier);
+    Point<double> center = frontier.cells[0];
+    std::cout << "starting point of the current frontier" << center.x << center.y <<std::endl;
     cell_t center_cell = global_position_to_grid_cell(center, map);
-    f_Node* center_node = new f_Node(center_cell.x, center_cell.y);
-    f_Node* valid_node;
+    Node* center_node = new Node(center_cell.x, center_cell.y);
+    Node* valid_node;
 
     ObstacleDistanceGrid distances = planner.obstacleDistances();
+    // std::cout << "obstacle distance map fetched" << std::endl;
+    // std::cout << "current min obstacle distance" << planner.searchparams().minDistanceToObstacle << std::endl;
     f_PriorityQueue openList;
-    std::vector<f_Node*> closedList;
-    std::vector<f_Node*> searchedList;
+    std::vector<Node*> closedList;
+    std::vector<Node*> searchedList;
     center_node->g_cost = 0;
     openList.push(center_node);
-
-    bool found_cell = false;
-    while(!openList.empty() && found_cell == false)
+    // std::cout << "searching from the center point" << std::endl;
+    // bool found_cell = false;
+    while(!openList.empty() && flag == false)
     {
-        f_Node* currentNode = openList.pop();
-        int x = currentNode->cell.x;
-        int y = currentNode->cell.y;
-
-        if(distances.isCellInGrid(x,y) && distances(x,y)>planner.searchparams().minDistanceToObstacle)
+        // std::cout <<" openlist len: " <<openList.elements.size() << std::endl;
+        Node* currentNode = openList.pop();
+        int cur_x = currentNode->cell.x;
+        int cur_y = currentNode->cell.y;
+        count++;
+        if(is_cell_free(currentNode->cell, map) && distances(cur_x,cur_y)>planner.searchparams().minDistanceToObstacle)
         {
-            found_cell == true;
+            std::cout << "valid cell found" << std::endl;
+            flag = true;
             valid_node = currentNode;
         }
         else
         {
             closedList.push_back(currentNode);
-            for(int i=0; i<8; i++)
+            for(int i=0; i<4; i++)
             {
                 int x = currentNode->cell.x + dx[i];
                 int y = currentNode->cell.y + dy[i];
-                f_Node* neighbor = new f_Node(x,y);
-                if(f_is_in_list(neighbor, searchedList))
-                    neighbor = f_get_from_list(neighbor, searchedList);
-                
-                if(!f_is_in_list(neighbor, closedList) && distances.isCellInGrid(x, y) && distances(x, y) > planner.searchparams().minDistanceToObstacle)
+                Node* neighbor = new Node(x,y);
+                // std::cout << "verify neighbor"<<neighbor->cell.x <<" "<< neighbor->cell.y << std::endl;
+                // if(!(std::find(searchedList.begin(), searchedList.end(), neighbor)==searchedList.end()))
+                // {
+                //     // std::cout << "current neighbor in searched list" << std::endl;
+                //     neighbor = get_from_list(neighbor, searchedList);
+                // }
+                // std::cout << "len of closed list" << closedList.size() << std::endl;
+                auto it = std::find(closedList.begin(), closedList.end(), neighbor);
+                if(it==closedList.end() && is_cell_free(neighbor->cell, map) && map.isCellInGrid(neighbor->cell.x, neighbor->cell.y))
                 {
-                    if(!f_is_in_list(neighbor, searchedList))
-                    {
-                        neighbor->g_cost = g_cost_frontier(currentNode, neighbor, distances, planner.searchparams());
-                        openList.push(neighbor);
-                        searchedList.push_back(neighbor);
-                    }
-                    else if(neighbor->g_cost > g_cost_frontier(currentNode, neighbor, distances, planner.searchparams()))
-                    {
-                        neighbor->g_cost = g_cost_frontier(currentNode, neighbor, distances, planner.searchparams());
+            
+                    // if(std::find(searchedList.begin(), searchedList.end(), neighbor)==searchedList.end())
+                    // {
+                        // std::cout << "a new neighbor cell" << std::endl;
+                        // neighbor->g_cost = g_cost(currentNode, neighbor, distances, planner.searchparams());
+                    openList.push(neighbor);
+                    // searchedList.push_back(neighbor);
+                    // }
+                    // else if(neighbor->g_cost > g_cost(currentNode, neighbor, distances, planner.searchparams()))
+                    // {
+                        
+                    //     neighbor->g_cost = g_cost(currentNode, neighbor, distances, planner.searchparams());
 
-                        openList.push(neighbor);
-                    }
+                    //     openList.push(neighbor);
+                    // }
                 }
             }
 
         }
+
+        if(count >50000)
+            break;
         
     }
     cell_t valid_cell = valid_node->cell;
@@ -338,25 +363,29 @@ Point<double> find_valid_goal_search(const frontier_t& frontier,
 double g_cost_frontier(f_Node* from, f_Node* goal, const ObstacleDistanceGrid& distances, const SearchParams& params)
 {
     // TODO: Return calculated g cost
+    std::cout << "calculating gcost of current cell" << std::endl;
     double g_cost = from->g_cost;
 
+
+    std::cout<< "parent cell gcost: "<< goal->cell.x <<std::endl;
     int dx = abs(goal->cell.x - from->cell.x);
     int dy = abs(goal->cell.y - from->cell.y);
-
+    std::cout<< "parent cell gcost: "<< dx <<std::endl;
     if(dx == 1 && dy == 1){
         g_cost += 1.41;
     }else{
         g_cost += 1.0;
     }
 
-    // Penalize if close to obstacle
+    std::cout<< "Penalize if close to obstacle" <<std::endl;
     double penalization = 0.0;
     if(distances(goal->cell.x, goal->cell.y) <= params.maxDistanceWithCost)
     {
-        penalization = (params.maxDistanceWithCost - distances(goal->cell.x, goal->cell.y)) * params.distanceCostExponent;
+        penalization = pow(params.maxDistanceWithCost - distances(goal->cell.x, goal->cell.y), params.distanceCostExponent);
     }
 
     g_cost = g_cost*distances.metersPerCell() + penalization;
+    std::cout << "calculate gcost of current cell: "<< g_cost << std::endl;
     return g_cost;
 }
 
@@ -374,10 +403,13 @@ Point<double> find_frontier_centroid(const frontier_t& frontier)
 
 bool f_is_in_list(f_Node* node, std::vector<f_Node*> list)
 {
+    
     for (auto &&item : list)
     {
+        // std::cout << "i'm here" << std::endl;
         if (*node == *item) return true;
     }
+    std::cout << " not in list " << std::endl;
     return false;
 }
 
