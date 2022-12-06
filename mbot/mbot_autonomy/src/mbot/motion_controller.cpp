@@ -416,12 +416,12 @@ int main(int argc, char** argv)
             mbot_lcm_msgs::mbot_motor_command_t cmd = controller.updateCommand();
             // Limit command values
             // Fwd vel
-            float max_lin_vel = 0.25;
+            float max_lin_vel = 0.2;
             if (cmd.trans_v > max_lin_vel) cmd.trans_v = max_lin_vel;
             else if (cmd.trans_v < -max_lin_vel) cmd.trans_v = -max_lin_vel;
 
             // Angular vel
-            float max_ang_vel = M_PI/2;
+            float max_ang_vel = M_PI/4;
             if (cmd.angular_v > max_ang_vel) cmd.angular_v = max_ang_vel;
             else if (cmd.angular_v < -max_ang_vel) cmd.angular_v = -max_ang_vel;
 

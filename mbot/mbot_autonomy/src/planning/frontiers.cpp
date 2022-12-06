@@ -288,7 +288,7 @@ Point<double> find_valid_goal_search(const frontier_t& frontier,
     std::cout << "starting point of the current frontier" << center.x << center.y <<std::endl;
     cell_t center_cell = global_position_to_grid_cell(center, map);
     Node* center_node = new Node(center_cell.x, center_cell.y);
-    Node* valid_node;
+    Node* valid_node = new Node(0, 0);
 
     ObstacleDistanceGrid distances = planner.obstacleDistances();
     // std::cout << "obstacle distance map fetched" << std::endl;
@@ -351,9 +351,10 @@ Point<double> find_valid_goal_search(const frontier_t& frontier,
 
         }
 
-        if(count >50000)
+        if(count >50000){
+            std::cout << " searching too much time" << std::endl;
             break;
-        
+        }
     }
     cell_t valid_cell = valid_node->cell;
     Point<double> valid_position = grid_position_to_global_position(valid_cell, map);
