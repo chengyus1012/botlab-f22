@@ -147,12 +147,13 @@ std::vector<Node*> prune_node_path(std::vector<Node*> nodePath){
     if(nodePath.size() < 3) return nodePath;
 
     std::vector<Node*> newPath;
+    std::vector<Node*> finalPath;
     newPath.push_back(nodePath[0]);
 
     Node* prevNode = NULL;
     Node* currNode = NULL;
     Node* nextNode = NULL;
-    int prev_dx, prev_dy, next_dx, next_dy;
+    int prev_dx, prev_dy, next_dx, next_dy, dx, dy;
     for(int i=1; i<nodePath.size()-1; i++){
         //dont add node if direction doesnt change
         prevNode = nodePath[i-1];
@@ -164,13 +165,28 @@ std::vector<Node*> prune_node_path(std::vector<Node*> nodePath){
         next_dx = nextNode->cell.x - currNode->cell.x;
         next_dy = nextNode->cell.y - currNode->cell.y;
 
+        // double norm = std::sqrt((double)prev_dx*prev_dx + (double)prev_dy*prev_dy);
+
         if(prev_dx != next_dx || prev_dy != next_dy){
             newPath.push_back(currNode);
         }
     }
 
     newPath.push_back(nodePath.back());
-    return newPath;
+    finalPath.push_back(newPath[0]);
+    for(int i=1; i<newPath.size()-1; i++)
+    {
+        dx = newPath[i]->cell.x - newPath[i-1]->cell.x;
+        dy = newPath[i]->cell.y - newPath[i-1]->cell.y;
+
+        double norm = std::sqrt((double)dx*dx + (double)dy*dy);
+        if(norm > 2)
+        {
+            finalPath.push_back(newPath[i]);
+        }
+    }
+    finalPath.push_back(newPath.back());
+    return finalPath;
 }
 
 // get poses from path

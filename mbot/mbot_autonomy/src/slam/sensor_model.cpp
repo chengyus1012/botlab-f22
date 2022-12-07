@@ -14,8 +14,8 @@ double SensorModel::likelihood(const mbot_lcm_msgs::particle_t& sample,
                                const OccupancyGrid& map)
 {
     double likelihood = 0.0;
-    double fraction_m = 0.9;
-    double fraction_bf = 0.05;
+    double fraction_m = 1;
+    double fraction_bf = 0;
 
     MovingLaserScan movingScan(scan, sample.parent_pose, sample.pose, ray_stride_);
     
