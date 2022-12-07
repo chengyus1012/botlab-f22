@@ -8,8 +8,8 @@
 
 
 ActionModel::ActionModel(void)
-: k1_(0.0008f) //rotation
-, k2_(0.0008f) //translation
+: k1_(0.02f) //rotation 0.008
+, k2_(0.001f) //translation 0.005
 , min_dist_(0.0) // 0.0025
 , min_theta_(0.0) //0.02
 , initialized_(false)

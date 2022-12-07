@@ -8,9 +8,9 @@
 
 ParticleFilter::ParticleFilter(int numParticles)
 : kNumParticles_ (numParticles),
-  samplingAugmentation(0.5, 0.9, numParticles),
+  samplingAugmentation(0.5, 0.9, numParticles), // 0.5, 0.9
   distribution_quality(1),
-  quality_reinvigoration_percentage(0.1)
+  quality_reinvigoration_percentage(0.0)
 {
     assert(kNumParticles_ > 1);
     posterior_.resize(kNumParticles_);
@@ -119,44 +119,56 @@ ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* 
     int Nrein = (int)kNumParticles_*quality_reinvigoration_percentage;
     ParticleList prior = posterior_;
 
-    for(int i=0; i<kNumParticles_;i++){
-        temp += posterior_[i].weight * posterior_[i].weight;
+    // for(int i=0; i<kNumParticles_;i++)
+    // {
+    //     temp += posterior_[i].weight * posterior_[i].weight;
+    // }
+    // Neff = 1.0/temp;
+    // if(Neff > (int)kNumParticles_)
+    // {
+    //     std::cout << " Effective particles: "<< Neff<< " thre: "<< (int)kNumParticles_*0.95<<std::endl;
+    // }
+    // else
+    // {
+    std::cout << "Low variance resampling.\n";
+    // double r = (double) rand()/RAND_MAX/kNumParticles_;
+    std::random_device rd;
+    std::mt19937 generator(rd());
+    std::uniform_real_distribution<double> dist(0.0, 1.0 / kNumParticles_);
+    double r = dist(generator);
+    int count = 0;
+    double c = posterior_[0].weight;
+    
+    // do low variance resample
+    for(int i=0; i<kNumParticles_;i++)
+    {
+        double u = r + (double)i*1.0/kNumParticles_;
+        while (u>c)
+        {
+            count++;
+            c += posterior_[count].weight;
+        }
+        prior[i] = posterior_[count];
+        prior[i].weight = sampleWeight;
     }
-    Neff = 1.0/temp;
-    if(Neff > (int)kNumParticles_){
-        std::cout << " Effective particles: "<< Neff<< " thre: "<< (int)kNumParticles_*0.95<<std::endl;
-    }
-    else{
-        std::cout << "Low variance resampling.\n";
-        // double r = (double) rand()/RAND_MAX/kNumParticles_;
-        std::random_device rd;
-        std::mt19937 generator(rd());
-        std::uniform_real_distribution<double> dist(0.0, 1.0 / kNumParticles_);
-        double r = dist(generator);
-        int count = 0;
-        double c = posterior_[0].weight;
+        // randomPoseGen.update_map(map);
+        // std::random_shuffle(prior.begin(), prior.end());
+        // for(int i=0; i<Nrein; i++)
+        // {
+        //     prior[i] = randomPoseGen.get_particle();
+        //     prior[i].weight = sampleWeight;
+        // }
         
-        // do low variance resample
-        for(int i=0; i<kNumParticles_;i++){
-            double u = r + i*1.0/kNumParticles_;
-            while (u>c)
-                c += posterior_[++count].weight;
-            prior[i] = posterior_[count];
+    // }
+    
+    if(samplingAugmentation.sample_randomly()){
+        randomPoseGen.update_map(map);
+        std::random_shuffle(prior.begin(), prior.end());
+        for(int i=0; i<Nrein; i++){
+            prior[i] = randomPoseGen.get_particle();
             prior[i].weight = sampleWeight;
         }
-        
-    }
-    
-    if(avg_w_initialized){
-        if(samplingAugmentation.sample_randomly()){
-            randomPoseGen.update_map(map);
-            std::random_shuffle(prior.begin(), prior.end());
-            for(int i=0; i<Nrein; i++){
-                prior[i] = randomPoseGen.get_particle();
-                prior[i].weight = sampleWeight;
-            }
-            std::cout << "reinvigorate.\n";
-        }
+        std::cout << "reinvigorate.\n";
     }
     // std::cout << "Particles resampled\n";    
 
@@ -197,12 +209,13 @@ ParticleList ParticleFilter::computeNormalizedPosterior(const ParticleList& prop
     }
 
     for(auto &p : posterior){
-        p.weight /= sumWeights;
         cur_avg_weight += p.weight/kNumParticles_;
-        if(!avg_w_initialized)
-            avg_w_initialized = true;
-        else
-            cur_avg_weight = 0.1*prev_avg_weight + 0.9*cur_avg_weight;
+        p.weight /= sumWeights;
+        
+        // if(!avg_w_initialized)
+        //     avg_w_initialized = true;
+        // else
+        //     cur_avg_weight = 0.1*prev_avg_weight + 0.9*cur_avg_weight;
     }
     // std::cout << "Posterior normalized.\n";
     return posterior;
@@ -217,10 +230,12 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::estimatePosteriorPose(const ParticleLi
     //////// TODO: Implement your method for computing the final pose estimate based on the posterior distribution
     mbot_lcm_msgs::pose_xyt_t pose;
 
-    double percentage = 0.1;
+    double percentage = 0.05; // 0.2
     particle_t_comparator comparator;
     ParticleList posterior_sorted = posterior;
     std::sort(posterior_sorted.begin(), posterior_sorted.end(), comparator);
+
+    // std::cout<<" some simple test" << (posterior_sorted[0].weight >= posterior_sorted[1].weight) << std::endl;
 
     double xMean = 0.0;
     double yMean = 0.0;

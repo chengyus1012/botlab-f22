@@ -14,8 +14,9 @@ double SensorModel::likelihood(const mbot_lcm_msgs::particle_t& sample,
                                const OccupancyGrid& map)
 {
     double likelihood = 0.0;
-    double fraction_m = 1;
-    double fraction_bf = 0;
+    double fraction_m = 0.35;
+    double fraction_bf = 0.325;
+    int count = 0;
 
     MovingLaserScan movingScan(scan, sample.parent_pose, sample.pose, ray_stride_);
     
@@ -25,23 +26,58 @@ double SensorModel::likelihood(const mbot_lcm_msgs::particle_t& sample,
         Point<int> rayEnd = global_position_to_grid_cell(endpoint, map);
         Point<int> rayStart = global_position_to_grid_cell(ray.origin, map);
 
+        int dx = abs(rayEnd.x - rayStart.x);
+        int dy = abs(rayEnd.y - rayStart.y);
+
         int sx = (rayStart.x < rayEnd.x) ? 1 : -1;
         int sy = (rayStart.y < rayEnd.y) ? 1 : -1;
 
-        CellOdds rayCost_m = map.logOdds(rayEnd.x, rayEnd.y);
-        CellOdds rayCost_b = map.logOdds(rayEnd.x-sx, rayEnd.y-sy);
-        CellOdds rayCost_f = map.logOdds(rayEnd.x+sx, rayEnd.y+sy);
+        int err = dx - dy;
+        int x = rayStart.x;
+        int y = rayStart.y;
 
+        bool flag = true;
 
-        if(rayCost_m>0){
-            likelihood += fraction_m*rayCost_m;
-        }else{
-            if(rayCost_b > 0)
-                likelihood += fraction_bf * rayCost_b;
-            else if(rayCost_f > 0)
-                likelihood += fraction_bf * rayCost_f;
+        while ((x != rayEnd.x || y != rayEnd.y) && map.isCellInGrid(x, y)) {
+            if(map.logOdds(x,y)>0){
+                flag = false;
+                break;
+            }
+            int e2 = 2 * err;
+            if (e2 >= -dy) {
+                err -= dy;
+                x += sx;
+            }
+            if (e2 <= dx) {
+                err += dx;
+                y += sy;
+            }
         }
+
+        if(flag==true){
+            CellOdds rayCost_m = map.logOdds(rayEnd.x, rayEnd.y);
+            CellOdds rayCost_b = map.logOdds(rayEnd.x-sx, rayEnd.y-sy);
+            CellOdds rayCost_f = map.logOdds(rayEnd.x+sx, rayEnd.y+sy);
+            if(rayCost_m>0)
+            {
+                likelihood += fraction_m*rayCost_m;
+                count++;
+            }else
+            {
+                if(rayCost_b > 0){
+                    likelihood += fraction_bf * rayCost_b;
+                    count++;}
+                else if(rayCost_f > 0){
+                    likelihood += fraction_bf * rayCost_f;
+                    count++;}
+            }
+        }
+
         
+        
+    }
+    if(count >= movingScan.size()*0.98){
+        likelihood *= 15.0;
     }
     
     return likelihood;
