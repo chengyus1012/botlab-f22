@@ -8,8 +8,21 @@ from mbot_lcm_msgs import robot_path_t, pose_xyt_t
 
 lc = lcm.LCM("udpm://239.255.76.67:7667?ttl=1")
 
+
 path = np.array(
     [
+        [0, 0, 0],
+        [1, 0, np.pi / 2.0],
+        [1, 1, np.pi],
+        [0, 1, 3*np.pi/4],
+        [0, 0, 0],
+        [1, 0, np.pi / 2.0],
+        [1, 1, np.pi],
+        [0, 1, 3*np.pi/4],
+        [0, 0, 0],
+        [1, 0, np.pi / 2.0],
+        [1, 1, np.pi],
+        [0, 1, 3*np.pi/4],
         [0, 0, 0],
         [1, 0, np.pi / 2.0],
         [1, 1, np.pi],
