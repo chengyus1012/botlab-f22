@@ -10,7 +10,8 @@ ParticleFilter::ParticleFilter(int numParticles)
 : kNumParticles_ (numParticles),
   samplingAugmentation(0.5, 0.9, numParticles), // 0.5, 0.9
   distribution_quality(1),
-  quality_reinvigoration_percentage(0.0)
+  quality_reinvigoration_percentage(0.2),
+  random_initialized(false)
 {
     assert(kNumParticles_ > 1);
     posterior_.resize(kNumParticles_);
@@ -38,6 +39,7 @@ void ParticleFilter::initializeFilterRandomly(const OccupancyGrid& map)
 {
     ///////////// TODO: Implement your method for initializing the particles in the particle filter /////////////////
     double sampleWeight = 1.0/kNumParticles_;
+    random_initialized = true;
 
     // posteriorPose_ = pose;
 
@@ -116,7 +118,11 @@ ParticleList ParticleFilter::resamplePosteriorDistribution(const OccupancyGrid* 
     double Neff;
     double temp = 0;
     double sampleWeight = 1.0/kNumParticles_;
-    int Nrein = (int)kNumParticles_*quality_reinvigoration_percentage;
+    int Nrein;
+    if(random_initialized)
+        Nrein = (int)kNumParticles_*quality_reinvigoration_percentage;
+    else
+        Nrein = 0;
     ParticleList prior = posterior_;
 
     // for(int i=0; i<kNumParticles_;i++)
