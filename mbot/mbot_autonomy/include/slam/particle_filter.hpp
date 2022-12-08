@@ -99,6 +99,7 @@ private:
     double cur_avg_weight;
     double prev_avg_weight;
     bool avg_w_initialized = false;
+    bool random_initialized;
 
     ParticleList resamplePosteriorDistribution(const OccupancyGrid* map = nullptr);
     ParticleList computeProposalDistribution(const ParticleList& prior);
