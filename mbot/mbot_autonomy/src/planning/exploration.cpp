@@ -3,6 +3,7 @@
 #include <planning/planning_channels.h>
 #include <utils/grid_utils.hpp>
 #include <common_utils/timestamp.h>
+#include <common_utils/geometric/angle_functions.hpp>
 #include <mbot/mbot_channels.h>
 #include <slam/slam_channels.h>
 #include <mbot_lcm_msgs/pose_xyt_t.hpp>
@@ -40,6 +41,7 @@ Exploration::Exploration(int32_t teamNumber,
 , haveNewPose_(false)
 , haveNewMap_(false)
 , haveHomePose_(false)
+, haveReturnPath_(false)
 , lcmInstance_(lcmInstance)
 , pathReceived_(false)
 {
@@ -160,6 +162,7 @@ void Exploration::executeStateMachine(void)
 {
     bool stateChanged = false;
     int8_t nextState = state_;
+    bool returning = (state_ == mbot_lcm_msgs::exploration_status_t::STATE_RETURNING_HOME);
     
     // Save the path from the previous iteration to determine if a new path was created and needs to be published
     mbot_lcm_msgs::robot_path_t previousPath = currentPath_;
@@ -210,7 +213,7 @@ void Exploration::executeStateMachine(void)
     }
 
     //if path changed, send current path
-    if(!are_equal(previousPath.path, currentPath_.path))
+    if(!are_equal(previousPath.path, currentPath_.path) && !returning)
     { 
 
         // std::cout << "INFO: Exploration: A new path was created on this iteration. Sending to Mbot:\n";
@@ -325,9 +328,13 @@ int8_t Exploration::executeReturningHome(bool initialize)
     *       (1) dist(currentPose_, targetPose_) < kReachedPositionThreshold  :  reached the home pose
     *       (2) currentPath_.path_length > 1  :  currently following a path to the home pose
     */
+
+    std::cout<< "returning home"<< homePose_.x<< " "<< homePose_.y<<" "<< homePose_.theta<< std::endl;
+    if(!haveReturnPath_){
+        currentPath_ = planner_.planPath(currentPose_,homePose_);
+        haveReturnPath_ = true;
+        }
     
-    printf("Returning home\n");
-    currentPath_ = planner_.planPath(currentPose_,homePose_);
     /////////////////////////////// End student code ///////////////////////////////
     
     /////////////////////////   Create the status message    //////////////////////////
@@ -338,13 +345,14 @@ int8_t Exploration::executeReturningHome(bool initialize)
     
     double distToHome = distance_between_points(Point<float>(homePose_.x, homePose_.y), 
                                                 Point<float>(currentPose_.x, currentPose_.y));
+    double angle_difference = abs(wrap_to_pi(homePose_.theta) - wrap_to_pi(currentPose_.theta));
     // If we're within the threshold of home, then we're done.
-    if(distToHome <= kReachedPositionThreshold)
+    if(distToHome <= kReachedPositionThreshold && angle_difference <= 0.15)
     {
         status.status = mbot_lcm_msgs::exploration_status_t::STATUS_COMPLETE;
     }
     // Otherwise, if there's a path, then keep following it
-    else if(currentPath_.path.size() > 1)
+    else if(currentPath_.path.size() >= 1)
     {
         status.status = mbot_lcm_msgs::exploration_status_t::STATUS_IN_PROGRESS;
     }

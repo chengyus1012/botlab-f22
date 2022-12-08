@@ -103,7 +103,7 @@ public:
             turn_der = (d_theta - turn_last_error) / 0.05;
         
         float turn_vel = turn_pid[0] * d_theta + turn_pid[1] * turn_sum_error + turn_pid[2] * turn_der;
-        // fprintf(stdout,"Turn error: %f\tTurn vel: %f\tPose theta: %f\n", d_theta, turn_vel, pose.theta);
+        fprintf(stdout,"Turn error: %f\tTurn vel: %f\tPose theta: %f\n", d_theta, turn_vel, pose.theta);
 
         return {0, 0, turn_vel};
     }
@@ -119,7 +119,7 @@ public:
             turn_der = (d_theta - turn_last_error) / 0.05;
         
         float turn_vel = turn_pid[0] * d_theta + turn_pid[1] * turn_sum_error + turn_pid[2] * turn_der;
-        // fprintf(stdout,"Turn error: %f\tTurn vel: %f\tPose theta: %f\n", d_theta, turn_vel, pose.theta);
+        fprintf(stdout,"Turn error: %f\tTurn vel: %f\tPose theta: %f\n", d_theta, turn_vel, pose.theta);
 
         return {0, 0, turn_vel};
     }
@@ -147,7 +147,7 @@ class SmartManeuverController : public ManeuverControllerBase
 {
 
 private:
-    float pid[3] = {1.0, 2.5, 0.0}; //kp, ka, kb
+    float pid[3] = {1.0, 2.5, 0.0}; //kp, ka, kb 1.0 2.5 0.0
     float d_end_crit = 0.02;
     float d_end_midsteps = 0.08;
     float angle_end_crit = 0.2;
@@ -170,6 +170,7 @@ public:
         //     vel_sign = -1;
         // }
         float beta = wrap_to_pi(target.theta -(alpha + pose.theta));
+        // printf("beta: %f\n", beta);
         float fwd_vel = vel_sign *  pid[0] * d_fwd;
         float turn_vel = pid[1] * alpha + pid[2] * beta;
 
@@ -186,6 +187,7 @@ public:
     virtual bool target_reached(const mbot_lcm_msgs::pose_xyt_t& pose, const mbot_lcm_msgs::pose_xyt_t& target, bool is_end_pose)  override
     {
         float distance = d_end_midsteps;
+        // float angle_diff = std::abs( wrap_to_pi(pose.theta) - wrap_to_pi(target.theta));
         if (is_end_pose)
             distance = d_end_crit;
         return ((fabs(pose.x - target.x) < distance) && (fabs(pose.y - target.y)  < distance));

@@ -193,7 +193,10 @@ std::vector<Node*> prune_node_path(std::vector<Node*> nodePath){
 std::vector<mbot_lcm_msgs::pose_xyt_t> extract_pose_path(std::vector<Node*> nodes, const ObstacleDistanceGrid& distances)
 {
     std::vector<mbot_lcm_msgs::pose_xyt_t> posePath;
+    int count = 0;
+    int N = nodes.size();
     for(auto &&node : nodes){
+        
         Point<double> global_pose = grid_position_to_global_position(node->cell, distances);
         mbot_lcm_msgs::pose_xyt_t currPose;
         currPose.x = global_pose.x;
@@ -202,10 +205,14 @@ std::vector<mbot_lcm_msgs::pose_xyt_t> extract_pose_path(std::vector<Node*> node
         if(posePath.size() == 0){
             currPose.theta = 0;
         }else{
-            mbot_lcm_msgs::pose_xyt_t prevPose = posePath.back();
-            currPose.theta = atan2(currPose.y -  prevPose.y, currPose.x - prevPose.x);
+            if(count == N-1)
+                currPose.theta = 0;
+            else{
+                mbot_lcm_msgs::pose_xyt_t prevPose = posePath.back();
+                currPose.theta = atan2(currPose.y -  prevPose.y, currPose.x - prevPose.x);
+            }
         }
-    
+        count++;
         currPose.utime = 0;
         posePath.push_back(currPose);
     }
