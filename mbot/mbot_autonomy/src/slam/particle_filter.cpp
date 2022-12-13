@@ -64,12 +64,16 @@ mbot_lcm_msgs::pose_xyt_t ParticleFilter::updateFilter(const mbot_lcm_msgs::pose
     bool hasRobotMoved = actionModel_.updateAction(odometry);
     // std::cout<<"has moved: "<<hasRobotMoved << std::endl;
     if(hasRobotMoved){
+        auto start = std::chrono::high_resolution_clock::now();
         auto prior = resamplePosteriorDistribution(&map);
         auto proposal = computeProposalDistribution(prior);
         posterior_ = computeNormalizedPosterior(proposal, laser, map);
         // reinvigoration step
         samplingAugmentation.insert_average_weight(cur_avg_weight);
         posteriorPose_ = estimatePosteriorPose(posterior_);
+        auto elapsed = std::chrono::high_resolution_clock::now() - start;
+        long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+        printf("%lld\n", microseconds);
     }
     
     posteriorPose_.utime = odometry.utime;
