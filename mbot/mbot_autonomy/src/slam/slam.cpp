@@ -26,7 +26,7 @@ OccupancyGridSLAM::OccupancyGridSLAM(int numParticles,
 , waitingForOptitrack_(waitForOptitrack)
 , haveMap_(false)
 , running_(true)
-, laserCW_(false)
+, laserCW_(true)
 , numIgnoredScans_(0)
 , iters_(0)
 , filter_(numParticles)
