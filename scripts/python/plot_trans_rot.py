@@ -39,8 +39,13 @@ for event in log:
         )
 # measured_vel_fwd = (measured_vel_l + measured_vel_r) / 2.0;
 # measured_vel_turn = (measured_vel_r - measured_vel_l) / WHEEL_BASE;
+plt.subplot(211)
 plt.plot(data[:, 0], (data[:, 5]+data[:,6])/2)
+plt.ylabel("Linear Velocity (m/s)")
+
+plt.subplot(212)
 plt.plot(data[:, 0], (data[:, 6]-data[:, 5])/0.155)
-plt.legend(["TRANS_VEL", "ROT_VEL"])
+plt.xlabel('Time (s)')
+plt.ylabel("Rotational Velocity (m/s)")
 
 plt.show()

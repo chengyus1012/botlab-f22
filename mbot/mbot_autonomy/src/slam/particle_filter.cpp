@@ -10,7 +10,7 @@ ParticleFilter::ParticleFilter(int numParticles)
 : kNumParticles_ (numParticles),
   samplingAugmentation(0.5, 0.9, numParticles), // 0.5, 0.9
   distribution_quality(1),
-  quality_reinvigoration_percentage(0.2),
+  quality_reinvigoration_percentage(0.25),
   random_initialized(false)
 {
     assert(kNumParticles_ > 1);
